@@ -1,3 +1,141 @@
+<?php
+session_start();
+
+if (!isset($connect)) {
+    require_once dirname(__DIR__, 3) . '/core/connection.php';
+}
+
+$message = '';
+$error = '';
+$fieldErrors = [];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create_tour') {
+    $tourName = $_POST['tour_name'] ?? '';
+    $tourType = $_POST['tour_type'] ?? 'eco';
+    $locationId = $_POST['location_id'] ?? 1;
+    $description = $_POST['description'] ?? '';
+    $duration = $_POST['duration'] ?? 4;
+    $pricePerPerson = $_POST['price_per_person'] ?? 0;
+    $maxCapacity = $_POST['max_capacity'] ?? 10;
+    $carbonFootprint = $_POST['carbon_footprint'] ?? null;
+    $wasteManagement = $_POST['waste_management'] ?? '';
+    $localHiring = isset($_POST['local_hiring']) ? 1 : 0;
+    $waypoints = $_POST['waypoints'] ?? [];
+    
+    if (empty($tourName)) {
+        $fieldErrors['tour_name'] = 'Tour name is required';
+    } elseif (strlen($tourName) < 3) {
+        $fieldErrors['tour_name'] = 'Tour name must be at least 3 characters';
+    } elseif (empty($pricePerPerson) || $pricePerPerson <= 0) {
+        $fieldErrors['price_per_person'] = 'Price per person is required';
+    } elseif (empty($maxCapacity) || $maxCapacity < 1) {
+        $fieldErrors['max_capacity'] = 'Max capacity is required';
+    } elseif (!isset($_SESSION['user_id'])) {
+        $error = 'You must be logged in';
+    } else {
+        try {
+            $guideId = $_SESSION['guide_id'] ?? $_SESSION['user_id'];
+
+            $uploadDir = dirname(__DIR__, 3) . '/public/uploads/tours/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+            
+            $heroImagePath = '';
+            $image1Path = '';
+            $image2Path = '';
+            
+            if (!empty($_FILES['hero_image']['name'])) {
+                $ext = pathinfo($_FILES['hero_image']['name'], PATHINFO_EXTENSION);
+                $heroImagePath = '/public/uploads/tours/' . time() . '_hero.' . $ext;
+                move_uploaded_file($_FILES['hero_image']['tmp_name'], dirname(__DIR__, 3) . $heroImagePath);
+            }
+            if (!empty($_FILES['image_1']['name'])) {
+                $ext = pathinfo($_FILES['image_1']['name'], PATHINFO_EXTENSION);
+                $image1Path = '/public/uploads/tours/' . time() . '_img1.' . $ext;
+                move_uploaded_file($_FILES['image_1']['tmp_name'], dirname(__DIR__, 3) . $image1Path);
+            }
+            if (!empty($_FILES['image_2']['name'])) {
+                $ext = pathinfo($_FILES['image_2']['name'], PATHINFO_EXTENSION);
+                $image2Path = '/public/uploads/tours/' . time() . '_img2.' . $ext;
+                move_uploaded_file($_FILES['image_2']['tmp_name'], dirname(__DIR__, 3) . $image2Path);
+            }
+            
+            $certPath = '';
+            if (!empty($_FILES['certificate_file']['name'])) {
+                $ext = pathinfo($_FILES['certificate_file']['name'], PATHINFO_EXTENSION);
+                $certPath = '/public/uploads/certs/' . time() . '_cert.' . $ext;
+                $certDir = dirname(__DIR__, 3) . '/public/uploads/certs/';
+                if (!is_dir($certDir)) { mkdir($certDir, 0777, true); }
+                move_uploaded_file($_FILES['certificate_file']['tmp_name'], dirname(__DIR__, 3) . $certPath);
+            }
+            
+            $stmt = $connect->prepare("
+                INSERT INTO tour (tour_name, guide_id, location_id, tour_type, status, carbon_footprint, waste_management, local_hiring)
+                VALUES (?, ?, ?, ?, 'draft', ?, ?, ?)
+            ");
+            $stmt->execute([$tourName, $guideId, $locationId, $tourType, $carbonFootprint, $wasteManagement, $localHiring]);
+            $tourId = $connect->lastInsertId();
+            
+            if ($heroImagePath) {
+                $stmt = $connect->prepare("INSERT INTO tour_images (tour_id, image_type, image_path) VALUES (?, 'hero', ?)");
+                $stmt->execute([$tourId, $heroImagePath]);
+            }
+            if ($image1Path) {
+                $stmt = $connect->prepare("INSERT INTO tour_images (tour_id, image_type, image_path) VALUES (?, 'gallery', ?)");
+                $stmt->execute([$tourId, $image1Path]);
+            }
+            if ($image2Path) {
+                $stmt = $connect->prepare("INSERT INTO tour_images (tour_id, image_type, image_path) VALUES (?, 'gallery', ?)");
+                $stmt->execute([$tourId, $image2Path]);
+            }
+            
+            $stmt = $connect->prepare("
+                INSERT INTO tour_version (tour_id, version_name, price_per_person, max_capacity, is_active)
+                VALUES (?, 'v1', ?, ?, 1)
+            ");
+            $stmt->execute([$tourId, $pricePerPerson, $maxCapacity]);
+            
+            if (!empty($waypoints)) {
+                $stmt = $connect->prepare("
+                    INSERT INTO tour_routes (tour_id, route_name, total_distance_km)
+                    VALUES (?, ?, ?)
+                ");
+                $stmt->execute([$tourId, $tourName . ' Route', null]);
+                $routeId = $connect->lastInsertId();
+                
+                $order = 1;
+                foreach ($waypoints as $wp) {
+                    if (!empty($wp['title'])) {
+                        $stmt = $connect->prepare("
+                            INSERT INTO route_stops (route_id, stop_name, stop_order)
+                            VALUES (?, ?, ?)
+                        ");
+                        $stmt->execute([$routeId, $wp['title'], $order++]);
+                    }
+                }
+            }
+            
+            if ($certPath) {
+                $stmt = $connect->prepare("
+                    INSERT INTO eco_certifications (guide_id, certificate_name, file_path, status, issue_date)
+                    VALUES (?, ?, ?, 'pending', CURDATE())
+                ");
+                $stmt->execute([$guideId, $tourName . ' Certification', $certPath]);
+            }
+            
+            $message = "Tour created successfully! Tour ID: $tourId";
+            
+        } catch (Exception $e) {
+            $error = 'Error: ' . $e->getMessage();
+        }
+    }
+}
+
+$stmt = $connect->query("SELECT location_id, location_name, country FROM location ORDER BY location_name");
+$locations = $stmt->fetchAll();
+?>
+
 <!DOCTYPE html>
 
 <html class="light" lang="en">
@@ -116,7 +254,7 @@
                 </div>
             </div>
         </div>
-        <nav class="flex-1 overflow-y-auto py-4">
+<nav class="flex-1 overflow-y-auto py-4">
             <ul class="flex flex-col font-['Manrope'] font-bold tracking-tight uppercase">
                 <li>
                     <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
@@ -127,16 +265,79 @@
                 </li>
                 <li>
                     <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
-                        href="guide_schedule_management.php">
+                        href="all_functions.php?tab=schedule">
                         <span class="material-symbols-outlined">calendar_today</span>
                         <span>Schedule</span>
                     </a>
                 </li>
                 <li>
                     <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
-                        href="earnings_payouts.php">
+                        href="all_functions.php?tab=earnings">
                         <span class="material-symbols-outlined">payments</span>
-                        Earnings
+                        <span>Earnings</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=reports">
+                        <span class="material-symbols-outlined">article</span>
+                        <span>Field Reports</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=certs">
+                        <span class="material-symbols-outlined">verified</span>
+                        <span>Certifications</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=languages">
+                        <span class="material-symbols-outlined">translate</span>
+                        <span>Languages</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=tags">
+                        <span class="material-symbols-outlined">sell</span>
+                        <span>Impact Tags</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=itinerary">
+                        <span class="material-symbols-outlined">map</span>
+                        <span>Itinerary</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=badges">
+                        <span class="material-symbols-outlined">workspace_premium</span>
+                        <span>Badges</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=shadowing">
+                        <span class="material-symbols-outlined">group</span>
+                        <span>Shadowing</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=identity">
+                        <span class="material-symbols-outlined">badge</span>
+                        <span>Identity</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=vouchers">
+                        <span class="material-symbols-outlined">qr_code</span>
+                        <span>Vouchers</span>
                     </a>
                 </li>
             </ul>
@@ -145,7 +346,7 @@
             <ul class="flex flex-col font-['Manrope'] font-bold tracking-tight uppercase">
                 <li>
                     <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-3 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
-                        href="#">
+                        href="../../index.php?logout=1">
                         <span class="material-symbols-outlined">logout</span>
                         Logout
                     </a>
@@ -161,7 +362,20 @@
             <p class="text-on-surface-variant font-body text-lg max-w-2xl">Define the architecture of your tour. Ensure
                 all sustainability metrics are accurately recorded for the audit trail.</p>
         </header>
-        <form class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        <?php if ($message): ?>
+        <div class="bg-primary-fixed text-on-primary-fixed p-4 mb-6 border-l-4 border-primary">
+            <?php echo $message; ?>
+        </div>
+        <?php endif; ?>
+        
+        <?php if ($error): ?>
+        <div class="bg-error-container text-on-error-container p-4 mb-6 border-l-4 border-error">
+            <?php echo $error; ?>
+        </div>
+        <?php endif; ?>
+        
+        <form method="POST" enctype="multipart/form-data" class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+            <input type="hidden" name="action" value="create_tour">
             <!-- Left Column: Details & Waypoints -->
             <div class="lg:col-span-7 flex flex-col gap-12">
                 <!-- Section: Tour Details -->
@@ -175,33 +389,66 @@
                         <div>
                             <label class="block font-label text-sm font-semibold text-on-surface mb-2">Experience
                                 Title</label>
-                            <input
-                                class="w-full bg-surface border border-outline rounded-none p-4 font-body text-on-surface focus:border-primary focus:border-2 focus:outline-none transition-all placeholder:text-outline-variant"
-                                placeholder="e.g., Coastal Foraging Expedition" type="text" />
+                            <input name="tour_name"
+                                class="w-full bg-surface border <?php echo isset($fieldErrors['tour_name']) ? 'border-error' : 'border-outline'; ?> rounded-none p-4 font-body text-on-surface focus:border-primary focus:border-2 focus:outline-none transition-all placeholder:text-outline-variant"
+                                placeholder="e.g., Coastal Foraging Expedition" type="text" value="<?php echo htmlspecialchars($_POST['tour_name'] ?? ''); ?>" />
+                            <?php if (isset($fieldErrors['tour_name'])): ?>
+                            <p class="text-error text-sm mt-1"><?php echo $fieldErrors['tour_name']; ?></p>
+                            <?php endif; ?>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label
-                                    class="block font-label text-sm font-semibold text-on-surface mb-2">Category</label>
-                                <select
+                                <label class="block font-label text-sm font-semibold text-on-surface mb-2">Location</label>
+                                <select name="location_id"
                                     class="w-full bg-surface border border-outline rounded-none p-4 font-body text-on-surface focus:border-primary focus:border-2 focus:outline-none transition-all appearance-none cursor-pointer">
-                                    <option>Flora &amp; Fauna</option>
-                                    <option>Heritage Walking</option>
-                                    <option>Conservation Effort</option>
+                                    <?php foreach ($locations as $loc): ?>
+                                    <option value="<?php echo $loc['location_id']; ?>"><?php echo htmlspecialchars($loc['location_name'] . ' - ' . $loc['country']); ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                             <div>
+                                <label class="block font-label text-sm font-semibold text-on-surface mb-2">Category</label>
+                                <select name="tour_type"
+                                    class="w-full bg-surface border border-outline rounded-none p-4 font-body text-on-surface focus:border-primary focus:border-2 focus:outline-none transition-all appearance-none cursor-pointer">
+                                    <option value="eco">Flora &amp; Fauna</option>
+                                    <option value="adventure">Adventure</option>
+                                    <option value="cultural">Cultural</option>
+                                    <option value="wildlife">Wildlife</option>
+                                    <option value="mixed">Mixed</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
                                 <label class="block font-label text-sm font-semibold text-on-surface mb-2">Duration
                                     (Hours)</label>
-                                <input
+                                <input name="duration"
                                     class="w-full bg-surface border border-outline rounded-none p-4 font-body text-on-surface focus:border-primary focus:border-2 focus:outline-none transition-all"
-                                    placeholder="4" type="number" />
+                                    placeholder="4" type="number" value="4" />
                             </div>
+                            <div>
+                                <label class="block font-label text-sm font-semibold text-on-surface mb-2">Price per Person ($)</label>
+                                <input name="price_per_person"
+                                    class="w-full bg-surface border <?php echo isset($fieldErrors['price_per_person']) ? 'border-error' : 'border-outline'; ?> rounded-none p-4 font-body text-on-surface focus:border-primary focus:border-2 focus:outline-none transition-all"
+                                    placeholder="100" type="number" step="0.01" value="<?php echo htmlspecialchars($_POST['price_per_person'] ?? '100'); ?>" />
+                                <?php if (isset($fieldErrors['price_per_person'])): ?>
+                                <p class="text-error text-sm mt-1"><?php echo $fieldErrors['price_per_person']; ?></p>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block font-label text-sm font-semibold text-on-surface mb-2">Max Capacity</label>
+                            <input name="max_capacity"
+                                class="w-full bg-surface border <?php echo isset($fieldErrors['max_capacity']) ? 'border-error' : 'border-outline'; ?> rounded-none p-4 font-body text-on-surface focus:border-primary focus:border-2 focus:outline-none transition-all"
+                                placeholder="10" type="number" value="<?php echo htmlspecialchars($_POST['max_capacity'] ?? '10'); ?>" />
+                            <?php if (isset($fieldErrors['max_capacity'])): ?>
+                            <p class="text-error text-sm mt-1"><?php echo $fieldErrors['max_capacity']; ?></p>
+                            <?php endif; ?>
                         </div>
                         <div>
                             <label class="block font-label text-sm font-semibold text-on-surface mb-2">Field
                                 Description</label>
-                            <textarea
+                            <textarea name="description"
                                 class="w-full bg-surface border border-outline rounded-none p-4 font-body text-on-surface focus:border-primary focus:border-2 focus:outline-none transition-all placeholder:text-outline-variant resize-y"
                                 placeholder="Detail the ecological significance and physical requirements of this journey..."
                                 rows="5"></textarea>
@@ -218,48 +465,31 @@
                         </h3>
                         <button
                             class="bg-secondary-container text-on-secondary-container rounded-none px-4 py-2 font-label text-sm font-bold hover:brightness-95 transition-all flex items-center gap-1"
-                            type="button">
+                            type="button" onclick="addWaypoint()">
                             <span class="material-symbols-outlined text-sm">add</span> Add Waypoint
                         </button>
                     </div>
-                    <div class="flex flex-col gap-4">
+                    <div class="flex flex-col gap-4" id="waypoints_container">
                         <!-- Waypoint Card 1 -->
-                        <div
-                            class="bg-surface-container p-6 rounded-none flex gap-6 items-start relative group hover:bg-surface-container-high transition-colors">
+                        <div class="bg-surface-container p-6 rounded-none flex gap-6 items-start relative group hover:bg-surface-container-high transition-colors">
                             <div class="flex flex-col items-center gap-2 mt-1">
-                                <span
-                                    class="w-8 h-8 bg-primary text-on-primary flex items-center justify-center font-headline font-bold text-sm rounded-none">01</span>
+                                <span class="w-8 h-8 bg-primary text-on-primary flex items-center justify-center font-headline font-bold text-sm rounded-none">01</span>
                                 <div class="w-px h-12 bg-outline-variant/40"></div>
                             </div>
                             <div class="flex-1 space-y-3">
-                                <input
-                                    class="w-full bg-transparent border-b border-outline-variant/50 rounded-none pb-2 font-body font-semibold text-on-surface focus:border-primary focus:outline-none transition-all text-lg"
-                                    type="text" value="Basecamp Orientation" />
-                                <textarea
-                                    class="w-full bg-surface border border-outline/30 rounded-none p-3 font-body text-sm text-on-surface focus:border-primary focus:outline-none transition-all mt-2"
-                                    placeholder="Waypoint activity details..."
-                                    rows="2">Briefing on local ecosystem and safety protocols.</textarea>
+                                <input name="waypoints[1][title]" class="w-full bg-transparent border-b border-outline-variant/50 rounded-none pb-2 font-body font-semibold text-on-surface focus:border-primary focus:outline-none transition-all text-lg" type="text" value="Basecamp Orientation" />
+                                <textarea name="waypoints[1][description]" class="w-full bg-surface border border-outline/30 rounded-none p-3 font-body text-sm text-on-surface focus:border-primary focus:outline-none transition-all mt-2" placeholder="Waypoint activity details..." rows="2">Briefing on local ecosystem and safety protocols.</textarea>
                             </div>
-                            <button class="text-outline hover:text-error transition-colors p-2"><span
-                                    class="material-symbols-outlined">delete</span></button>
                         </div>
                         <!-- Waypoint Card 2 -->
-                        <div
-                            class="bg-surface-container p-6 rounded-none flex gap-6 items-start relative group hover:bg-surface-container-high transition-colors">
+                        <div class="bg-surface-container p-6 rounded-none flex gap-6 items-start relative group hover:bg-surface-container-high transition-colors">
                             <div class="flex flex-col items-center gap-2 mt-1">
-                                <span
-                                    class="w-8 h-8 bg-primary text-on-primary flex items-center justify-center font-headline font-bold text-sm rounded-none">02</span>
+                                <span class="w-8 h-8 bg-primary text-on-primary flex items-center justify-center font-headline font-bold text-sm rounded-none">02</span>
                             </div>
                             <div class="flex-1 space-y-3">
-                                <input
-                                    class="w-full bg-transparent border-b border-outline-variant/50 rounded-none pb-2 font-body font-semibold text-on-surface focus:border-primary focus:outline-none transition-all text-lg"
-                                    placeholder="Waypoint Title" type="text" />
-                                <textarea
-                                    class="w-full bg-surface border border-outline/30 rounded-none p-3 font-body text-sm text-on-surface focus:border-primary focus:outline-none transition-all mt-2"
-                                    placeholder="Waypoint activity details..." rows="2"></textarea>
+                                <input name="waypoints[2][title]" class="w-full bg-transparent border-b border-outline-variant/50 rounded-none pb-2 font-body font-semibold text-on-surface focus:border-primary focus:outline-none transition-all text-lg" placeholder="Waypoint Title" type="text" />
+                                <textarea name="waypoints[2][description]" class="w-full bg-surface border border-outline/30 rounded-none p-3 font-body text-sm text-on-surface focus:border-primary focus:outline-none transition-all mt-2" placeholder="Waypoint activity details..." rows="2"></textarea>
                             </div>
-                            <button class="text-outline hover:text-error transition-colors p-2"><span
-                                    class="material-symbols-outlined">delete</span></button>
                         </div>
                     </div>
                 </section>
@@ -275,23 +505,28 @@
                     </h3>
                     <div class="space-y-4">
                         <!-- Hero Upload -->
-                        <div
-                            class="w-full aspect-square bg-surface-variant flex flex-col items-center justify-center text-outline-variant border-2 border-dashed border-outline/30 hover:border-primary hover:text-primary transition-all cursor-pointer relative group">
-                            <span
-                                class="material-symbols-outlined text-4xl mb-2 group-hover:scale-110 transition-transform">add_photo_alternate</span>
-                            <span class="font-label text-sm font-medium">Upload Hero Image</span>
-                            <span class="font-label text-xs mt-1 opacity-70">Strictly square, high contrast</span>
-                        </div>
+                        <label class="block cursor-pointer">
+                            <input type="file" name="hero_image" accept="image/*" class="hidden" id="hero_upload" onchange="previewImage(this, 'hero_preview')">
+                            <div id="hero_preview" class="w-full aspect-square bg-surface-variant flex flex-col items-center justify-center text-outline-variant border-2 border-dashed border-outline/30 hover:border-primary hover:text-primary transition-all cursor-pointer relative group">
+                                <span class="material-symbols-outlined text-4xl mb-2 group-hover:scale-110 transition-transform">add_photo_alternate</span>
+                                <span class="font-label text-sm font-medium">Upload Hero Image</span>
+                                <span class="font-label text-xs mt-1 opacity-70">Strictly square, high contrast</span>
+                            </div>
+                        </label>
                         <!-- Grid Uploads -->
                         <div class="grid grid-cols-2 gap-4">
-                            <div
-                                class="aspect-square bg-surface-variant flex items-center justify-center text-outline-variant border border-dashed border-outline/30 hover:border-primary hover:text-primary transition-all cursor-pointer">
-                                <span class="material-symbols-outlined text-2xl">add</span>
-                            </div>
-                            <div
-                                class="aspect-square bg-surface-variant flex items-center justify-center text-outline-variant border border-dashed border-outline/30 hover:border-primary hover:text-primary transition-all cursor-pointer">
-                                <span class="material-symbols-outlined text-2xl">add</span>
-                            </div>
+                            <label class="cursor-pointer">
+                                <input type="file" name="image_1" accept="image/*" class="hidden" id="img1_upload" onchange="previewImage(this, 'img1_preview')">
+                                <div id="img1_preview" class="aspect-square bg-surface-variant flex items-center justify-center text-outline-variant border border-dashed border-outline/30 hover:border-primary hover:text-primary transition-all cursor-pointer">
+                                    <span class="material-symbols-outlined text-2xl">add</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="file" name="image_2" accept="image/*" class="hidden" id="img2_upload" onchange="previewImage(this, 'img2_preview')">
+                                <div id="img2_preview" class="aspect-square bg-surface-variant flex items-center justify-center text-outline-variant border border-dashed border-outline/30 hover:border-primary hover:text-primary transition-all cursor-pointer">
+                                    <span class="material-symbols-outlined text-2xl">add</span>
+                                </div>
+                            </label>
                         </div>
                     </div>
                 </section>
@@ -330,10 +565,20 @@
                                 <span class="material-symbols-outlined">handshake</span>
                                 <span class="font-label font-semibold text-sm">Local Hiring</span>
                             </div>
-                            <div class="w-8 h-8 bg-surface-variant flex items-center justify-center text-outline">
-                                <span class="material-symbols-outlined text-sm">check</span>
-                            </div>
+                            <input type="checkbox" name="local_hiring" value="1" class="w-8 h-8 accent-primary" />
                         </div>
+                    </div>
+                    <div>
+                        <label class="block font-label text-sm font-semibold text-on-surface mb-2">Carbon Footprint (kg CO2)</label>
+                        <input name="carbon_footprint"
+                            class="w-full bg-surface border border-outline rounded-none p-4 font-body text-on-surface focus:border-primary focus:border-2 focus:outline-none transition-all"
+                            placeholder="e.g., 50.00" type="number" step="0.01" />
+                    </div>
+                    <div>
+                        <label class="block font-label text-sm font-semibold text-on-surface mb-2">Waste Management</label>
+                        <input name="waste_management"
+                            class="w-full bg-surface border border-outline rounded-none p-4 font-body text-on-surface focus:border-primary focus:border-2 focus:outline-none transition-all"
+                            placeholder="e.g., Zero trace policy" type="text" />
                     </div>
                     <!-- Certificate Upload -->
                     <div>
@@ -342,15 +587,17 @@
                             <span class="material-symbols-outlined text-sm">verified</span>
                             Audit Trail Credentials
                         </label>
-                        <div
-                            class="w-full bg-surface border border-outline border-dashed p-4 flex items-center justify-between hover:bg-surface-variant transition-colors cursor-pointer group">
-                            <div class="flex items-center gap-3 text-on-surface-variant">
-                                <span class="material-symbols-outlined">upload_file</span>
-                                <span class="font-body text-sm">Attach Certification (PDF)</span>
+                        <label class="block cursor-pointer">
+                            <input type="file" name="certificate_file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="hidden" id="cert_upload" onchange="updateCertLabel(this)">
+                            <div id="cert_file_label"
+                                class="w-full bg-surface border border-outline border-dashed p-4 flex items-center justify-between hover:bg-surface-variant transition-colors cursor-pointer group">
+                                <div class="flex items-center gap-3 text-on-surface-variant">
+                                    <span class="material-symbols-outlined">upload_file</span>
+                                    <span class="font-body text-sm">Attach Certification (PDF)</span>
+                                </div>
+                                <span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">arrow_forward</span>
                             </div>
-                            <span
-                                class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">arrow_forward</span>
-                        </div>
+                        </label>
                     </div>
                 </section>
                 <!-- Action Block -->
@@ -365,6 +612,46 @@
             </div>
         </form>
     </main>
+<script>
+    let waypointCount = 2;
+    
+    function addWaypoint() {
+        waypointCount++;
+        const container = document.querySelector('.flex.flex-col.gap-4');
+        const newWaypoint = document.createElement('div');
+        newWaypoint.className = 'bg-surface-container p-6 rounded-none flex gap-6 items-start relative group hover:bg-surface-container-high transition-colors';
+        newWaypoint.innerHTML = `
+            <div class="flex flex-col items-center gap-2 mt-1">
+                <span class="w-8 h-8 bg-primary text-on-primary flex items-center justify-center font-headline font-bold text-sm rounded-none">${String(waypointCount).padStart(2, '0')}</span>
+                <div class="w-px h-12 bg-outline-variant/40"></div>
+            </div>
+            <div class="flex-1 space-y-3">
+                <input name="waypoints[${waypointCount}][title]" class="w-full bg-transparent border-b border-outline-variant/50 rounded-none pb-2 font-body font-semibold text-on-surface focus:border-primary focus:outline-none transition-all text-lg" type="text" placeholder="Waypoint Title" />
+                <textarea name="waypoints[${waypointCount}][description]" class="w-full bg-surface border border-outline/30 rounded-none p-3 font-body text-sm text-on-surface focus:border-primary focus:outline-none transition-all mt-2" placeholder="Waypoint activity details..." rows="2"></textarea>
+            </div>
+            <button type="button" class="text-outline hover:text-error transition-colors p-2" onclick="this.parentElement.remove()"><span class="material-symbols-outlined">delete</span></button>
+        `;
+        container.appendChild(newWaypoint);
+    }
+    
+    function previewImage(input, previewId) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById(previewId);
+                preview.innerHTML = '<img src="' + e.target.result + '" class="w-full h-full object-cover">';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    
+    function updateCertLabel(input) {
+        if (input.files && input.files[0]) {
+            const label = document.getElementById('cert_file_label');
+            label.querySelector('.font-body').textContent = input.files[0].name;
+        }
+    }
+</script>
 </body>
 
 </html>

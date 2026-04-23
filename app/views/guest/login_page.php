@@ -1,3 +1,51 @@
+<?php
+session_start();
+
+$error = '';
+$success = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = $_POST['email'] ?? '';
+    $password = $_POST['password'] ?? '';
+    
+    if (empty($email) || empty($password)) {
+        $error = 'Please enter email and password';
+    } else {
+        require_once dirname(__DIR__, 3) . '/core/connection.php';
+        
+        $stmt = $connect->prepare("SELECT user_id, name, password_hash, role FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch();
+        
+        if ($user && password_verify($password, $user['password_hash'])) {
+            $_SESSION['user_id'] = $user['user_id'];
+            $_SESSION['name'] = $user['name'];
+            $_SESSION['role'] = $user['role'];
+            
+            if ($user['role'] === 'guide') {
+                $stmt = $connect->prepare("SELECT guide_id FROM guide WHERE guide_id = ?");
+                $stmt->execute([$user['user_id']]);
+                $guide = $stmt->fetch();
+                if ($guide) {
+                    $_SESSION['guide_id'] = $guide['guide_id'];
+                }
+            }
+            
+            if ($user['role'] === 'guide') {
+                header('Location: ../guide/guide_dashboard.php');
+            } elseif ($user['role'] === 'super_admin' || $user['role'] === 'auditor') {
+                header('Location: ../admin/dashboard.php');
+            } else {
+                header('Location: ../../index.php');
+            }
+            exit;
+        } else {
+            $error = 'Invalid email or password';
+        }
+    }
+}
+?>
+
 <!DOCTYPE html>
 
 <html class="light" lang="en">
@@ -130,14 +178,27 @@
                     <h2 class="text-3xl font-headline font-extrabold tracking-tight text-primary mb-2">Welcome Back</h2>
                     <p class="text-on-surface-variant font-body">Enter your credentials to access the portal.</p>
                 </div>
-                <form class="space-y-6">
+                
+                <?php if ($error): ?>
+                <div class="bg-error-container text-on-error-container p-4 mb-6 border-l-4 border-error">
+                    <p class="text-sm font-bold"><?php echo htmlspecialchars($error); ?></p>
+                </div>
+                <?php endif; ?>
+                
+                <?php if ($success): ?>
+                <div class="bg-primary-fixed text-on-primary-fixed p-4 mb-6 border-l-4 border-primary">
+                    <p class="text-sm font-bold"><?php echo htmlspecialchars($success); ?></p>
+                </div>
+                <?php endif; ?>
+                
+                <form method="POST" class="space-y-6">
                     <div class="space-y-2">
                         <label
                             class="block text-xs font-label font-bold uppercase tracking-widest text-on-surface-variant"
                             for="email">Email Address</label>
                         <input
                             class="w-full border-outline-variant bg-surface-container-lowest focus:ring-0 focus:border-primary px-4 py-4 font-body text-sm rounded-none border-2 transition-colors duration-200"
-                            id="email" name="email" placeholder="architect@earth.com" type="email" />
+                            id="email" name="email" placeholder="architect@earth.com" type="email" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" />
                     </div>
                     <div class="space-y-2">
                         <div class="flex justify-between items-center">
@@ -152,7 +213,7 @@
                                 class="w-full border-outline-variant bg-surface-container-lowest focus:ring-0 focus:border-primary px-4 py-4 font-body text-sm rounded-none border-2 transition-colors duration-200"
                                 id="password" name="password" placeholder="••••••••••••" type="password" />
                             <button class="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant"
-                                type="button">
+                                type="button" onclick="togglePassword()">
                                 <span class="material-symbols-outlined text-xl" data-icon="visibility">visibility</span>
                             </button>
                         </div>
@@ -171,12 +232,24 @@
                     <p class="text-sm font-body text-on-surface-variant">
                         Don't have an account?
                         <a class="font-bold text-primary hover:underline decoration-2 underline-offset-4"
-                            href="#">Register</a>
+                            href="registration_selection.php">Register</a>
                     </p>
                 </div>
             </div>
         </section>
     </main>
 </body>
-
+<script>
+    function togglePassword() {
+        const passwordInput = document.getElementById('password');
+        const icon = document.querySelector('[data-icon="visibility"]');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.textContent = 'visibility_off';
+        } else {
+            passwordInput.type = 'password';
+            icon.textContent = 'visibility';
+        }
+    }
+</script>
 </html>
