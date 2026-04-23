@@ -14,7 +14,7 @@ $platformSettings = $platformSettingsModel->getPlatformSettings();
     <main class="flex-1 flex flex-col md:ml-64 h-full">
         <div class="flex-1 overflow-y-auto pt-16 bg-surface p-6 md:p-8 lg:p-12">
             <div class="max-w-5xl mx-auto space-y-12">
-                <form onsubmit="return validateForm()" action="../../controllers/ConfigController.php" method="POST">
+                <form onsubmit="validateForm(event)" action="../../controllers/ConfigController.php" method="POST">
                     <div class="mb-8">
                         <h2 class="font-headline text-3xl font-extrabold text-on-surface tracking-tight mb-2">
                             Global Configuration
@@ -31,7 +31,7 @@ $platformSettings = $platformSettingsModel->getPlatformSettings();
                                 <h3 class="font-headline text-xl font-bold text-on-surface">Financial Parameters</h3>
                             </div>
                             <div class="space-y-8">
-                                <div>
+                                <div id="input-1">
                                     <label class="block font-label text-sm font-medium text-on-surface mb-2">
                                         Base Platform Commission (%)
                                     </label>
@@ -39,9 +39,10 @@ $platformSettings = $platformSettingsModel->getPlatformSettings();
                                         class="w-full bg-surface border border-outline text-on-surface p-3 focus:border-primary focus:ring-0 transition-colors font-body text-sm rounded-none mb-2"
                                         type="number" step="0.1"
                                         value="<?php echo $platformSettings["platform_fee_percent"]; ?>" />
-                                    <div class="text-red-500 text-sm mt-1 hidden" id="error_platform_fee"></div>
+                                    <div class="text-red-500 text-sm mt-1 hidden errors">
+                                    </div>
                                 </div>
-                                <div>
+                                <div id="input-2">
                                     <label class="block font-label text-sm font-medium text-on-surface mb-2">
                                         Sustainability Contribution (%)
                                     </label>
@@ -49,9 +50,9 @@ $platformSettings = $platformSettingsModel->getPlatformSettings();
                                         class="w-full bg-surface border border-outline text-on-surface p-3 focus:border-primary focus:ring-0 transition-colors font-body text-sm rounded-none mb-2"
                                         type="number" step="0.1"
                                         value="<?php echo $platformSettings["sustainability_contribution"]; ?>" />
-                                    <div class="text-red-500 text-sm mt-1 hidden" id="error_platform_fee"></div>
+                                    <div class="text-red-500 text-sm mt-1 hidden errors"></div>
                                 </div>
-                                <div>
+                                <div id="input-3">
                                     <label class="block font-label text-sm font-medium text-on-surface mb-2">
                                         Local Tax Percent (%)
                                     </label>
@@ -59,7 +60,7 @@ $platformSettings = $platformSettingsModel->getPlatformSettings();
                                         class="w-full bg-surface border border-outline text-on-surface p-3 focus:border-primary focus:ring-0 transition-colors font-body text-sm rounded-none mb-2"
                                         type="number" step="0.1"
                                         value="<?php echo $platformSettings["local_tax_percent"]; ?>" />
-                                    <div class="text-red-500 text-sm mt-1 hidden" id="error_platform_fee"></div>
+                                    <div class="text-red-500 text-sm mt-1 hidden errors"></div>
                                 </div>
                             </div>
                         </div>
@@ -70,35 +71,36 @@ $platformSettings = $platformSettingsModel->getPlatformSettings();
                                 <h3 class="font-headline text-xl font-bold text-on-surface">Eco-Leaf Weights</h3>
                             </div>
                             <div class="space-y-5">
-                                <div>
+                                <div id="input-4">
                                     <label class="font-label text-sm font-medium text-on-surface">Carbon Offset
                                         (%)</label>
                                     <input name="carbon_footprint"
                                         class="w-full bg-surface border border-outline text-on-surface p-3 mt-2"
                                         type="number" value="<?php echo $platformSettings["carbon_footprint"]; ?>" />
-                                    <div class="text-red-500 text-sm mt-1 hidden" id="error_platform_fee"></div>
+                                    <div class="text-red-500 text-sm mt-1 hidden errors"></div>
                                 </div>
-                                <div>
+                                <div id="input-5">
                                     <label class="font-label text-sm font-medium text-on-surface">Local Economy Support
                                         (%)</label>
                                     <input name="local_economy_support"
                                         class="w-full bg-surface border border-outline text-on-surface p-3 mt-2"
                                         type="number"
                                         value="<?php echo $platformSettings["local_economy_support"]; ?>" />
-                                    <div class="text-red-500 text-sm mt-1 hidden" id="error_platform_fee"></div>
+                                    <div class="text-red-500 text-sm mt-1 hidden errors">
+                                    </div>
                                 </div>
-                                <div>
+                                <div id="input-6">
                                     <label class="font-label text-sm font-medium text-on-surface">Wildlife Protection
                                         (%)</label>
                                     <input name="wildlife_protection"
                                         class="w-full bg-surface border border-outline text-on-surface p-3 mt-2"
                                         type="number" value="<?php echo $platformSettings["wildlife_protection"]; ?>" />
-                                    <div class="text-red-500 text-sm mt-1 hidden" id="error_platform_fee"></div>
+                                    <div class="text-red-500 text-sm mt-1 hidden errors"></div>
                                 </div>
-                                <button type="button"
-                                    class="w-full mt-4 bg-surface-container hover:bg-surface-container-high text-on-surface py-2 px-4 font-label text-sm font-medium transition-colors">
-                                    Adjust Weights
-                                </button>
+                                <div class="w-full mt-4 bg-red-100 text-red-700 border border-red-300 text-center py-2 px-4 font-label text-xs font-medium rounded transition-colors hidden"
+                                    id="eco-error">
+                                    the Eco-Leaf Score must be equal to 100
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -120,55 +122,75 @@ $platformSettings = $platformSettingsModel->getPlatformSettings();
         </div>
     </main>
     <script>
-        function val(name) {
-            return document.querySelector(`[name='${name}']`).value;
-        }
+        function validateForm(event) {
+            let platform_fee_percent = document.getElementById("input-1");
+            let sustainability_contribution = document.getElementById("input-2");
+            let local_tax_percent = document.getElementById("input-3");
+            let carbon_footprint = document.getElementById("input-4");
+            let local_economy_support = document.getElementById("input-5");
+            let wildlife_protection = document.getElementById("input-6");
 
-        function num(v) {
-            return v !== "" && !isNaN(v);
-        }
-
-        function err(id, msg) {
-            const el = document.getElementById(id);
-            if (el) {
-                el.innerText = msg;
-                el.classList.remove("hidden");
+            function validateNumberInput(containerElement) {
+                let input = containerElement.getElementsByTagName("input")[0].value;
+                if (input == "" || input < 0) {
+                    return false;
+                } else {
+                    return true;
+                }
             }
-        }
 
-        function clearErrors() {
-            document.querySelectorAll("[id^='error_']").forEach(e => {
-                e.innerText = "";
-                e.classList.add("hidden");
-            });
-        }
+            if (!validateNumberInput(platform_fee_percent)) {
+                event.preventDefault();
+                let errorsDiv = platform_fee_percent.getElementsByClassName("errors")[0];
+                errorsDiv.innerHTML = "please enter a valid platform fee";
+                errorsDiv.classList.remove("hidden");
+            }
 
-        function validateForm() {
-            clearErrors();
+            if (!validateNumberInput(sustainability_contribution)) {
+                event.preventDefault();
+                let errorsDiv = sustainability_contribution.getElementsByClassName("errors")[0];
+                errorsDiv.innerHTML = "please enter a valid sustainability contribution";
+                errorsDiv.classList.remove("hidden");
+            }
 
-            let p = val("platform_fee_percent");
-            let s = val("sustainability_contribution");
-            let t = val("local_tax_percent");
-            let c = val("carbon_footprint");
-            let e = val("local_economy_support");
-            let w = val("wildlife_protection");
+            if (!validateNumberInput(local_tax_percent)) {
+                event.preventDefault();
+                let errorsDiv = local_tax_percent.getElementsByClassName("errors")[0];
+                errorsDiv.innerHTML = "please enter a valid local tax";
+                errorsDiv.classList.remove("hidden");
+            }
 
-            let ok = true;
+            if (!validateNumberInput(carbon_footprint)) {
+                event.preventDefault();
+                let errorsDiv = carbon_footprint.getElementsByClassName("errors")[0];
+                errorsDiv.innerHTML = "please enter a valid carbon footprint";
+                errorsDiv.classList.remove("hidden");
+            }
 
-            if (!num(p)) { err("error_platform_fee", "Invalid"); ok = false; }
-            if (!num(s)) { err("error_sustainability", "Invalid"); ok = false; }
-            if (!num(t)) { err("error_tax", "Invalid"); ok = false; }
-            if (!num(c)) { err("error_carbon", "Invalid"); ok = false; }
-            if (!num(e)) { err("error_economy", "Invalid"); ok = false; }
-            if (!num(w)) { err("error_wildlife", "Invalid"); ok = false; }
+            if (!validateNumberInput(local_economy_support)) {
+                event.preventDefault();
+                let errorsDiv = local_economy_support.getElementsByClassName("errors")[0];
+                errorsDiv.innerHTML = "please enter a valid local economy support";
+                errorsDiv.classList.remove("hidden");
+            }
 
-            let eco = (+c + +e + +w).toFixed(2);
-            let fees = (+p + +s + +t).toFixed(2);
+            if (!validateNumberInput(wildlife_protection)) {
+                event.preventDefault();
+                let errorsDiv = wildlife_protection.getElementsByClassName("errors")[0];
+                errorsDiv.innerHTML = "please enter a valid wildlife protection";
+                errorsDiv.classList.remove("hidden");
+            }
 
-            if (eco != 100) { alert("Eco must be 100% (now " + eco + ")"); ok = false; }
-            if (fees > 100) { alert("Fees exceed 100% (now " + fees + ")"); ok = false; }
+            let ecoLeafWeights =
+                parseFloat(carbon_footprint.getElementsByTagName("input")[0].value) +
+                parseFloat(local_economy_support.getElementsByTagName("input")[0].value) +
+                parseFloat(wildlife_protection.getElementsByTagName("input")[0].value);
 
-            return ok;
+            if (Math.round(ecoLeafWeights) !== 100) {
+                event.preventDefault();
+                document.getElementById("eco-error").classList.remove("hidden");
+            }
+
         }
     </script>
 </body>

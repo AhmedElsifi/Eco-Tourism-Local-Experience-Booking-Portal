@@ -33,134 +33,82 @@ require_once("../components/AdminHead.php");
                     </button>
                 </div>
             </header>
-            <!-- Brutalist Table Replacement: High-Density List Cards -->
-            <div class="flex flex-col gap-8">
-                <!-- Table Header (Visual only for md+) -->
-                <div
-                    class="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-surface-container border-l-4 border-primary text-xs font-headline font-bold tracking-wider text-on-surface uppercase">
-                    <div class="col-span-4">Guide Identifier</div>
-                    <div class="col-span-3">Specialty / Zone</div>
-                    <div class="col-span-2">Eco-Rating</div>
-                    <div class="col-span-2">Status</div>
-                    <div class="col-span-1 text-right">Action</div>
-                </div>
-                <!-- Row Item 1 -->
-                <div
-                    class="group grid grid-cols-1 md:grid-cols-12 gap-4 md:items-center p-6 bg-surface-container-lowest hover:bg-surface-container-low transition-colors duration-200 cursor-pointer shadow-[0px_4px_12px_rgba(25,28,25,0.03)] border border-outline-variant/15 relative">
-                    <div class="md:col-span-4 flex items-center gap-4">
-                        <img class="w-12 h-12 object-cover bg-surface-variant"
-                            data-alt="Portrait of a rugged male outdoors guide wearing a practical jacket"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOf8Whoy4EWmV27WzcVzcNJ6huCWBIi4YovB-VbrVpb_oHwWgnG8amp425upn7QfUdwnxsEWeEoYxmTR2I8r53uEKFtCwhIAc8_T6qf7o10x_LEOrTtRA4Xr6pH9_wIH8TcomFmdzI6qZWRpM-hTWQwNa2skp_3lifi-yleZTRP7ZoyVSGUmdAY0og_sadSFQZV26QJIxj9DpPfhmuO3KmcCX012f3L7PYc-oPqjN8qyACE_RQYgq0YoJOkcTETKDbPQCbVfDk9RA" />
-                        <div>
-                            <h3 class="font-headline font-bold text-lg text-primary leading-tight">Elias Thorne</h3>
-                            <span class="font-body text-xs text-outline font-mono">ID: GD-8492-N</span>
-                        </div>
-                    </div>
-                    <div class="md:col-span-3 font-body text-sm text-on-surface-variant flex flex-col">
-                        <span class="font-medium text-on-surface">Alpine Tundra</span>
-                        <span class="text-xs">Glacial Ecology</span>
-                    </div>
-                    <div class="md:col-span-2 flex items-center gap-1">
-                        <span class="material-symbols-outlined text-primary text-[18px]"
-                            style="font-variation-settings: 'FILL' 1;">eco</span>
-                        <span class="material-symbols-outlined text-primary text-[18px]"
-                            style="font-variation-settings: 'FILL' 1;">eco</span>
-                        <span class="material-symbols-outlined text-primary text-[18px]"
-                            style="font-variation-settings: 'FILL' 1;">eco</span>
-                        <span class="material-symbols-outlined text-primary text-[18px]"
-                            style="font-variation-settings: 'FILL' 1;">eco</span>
-                        <span class="material-symbols-outlined text-outline-variant/40 text-[18px]"
-                            style="font-variation-settings: 'FILL' 1;">eco</span>
-                    </div>
-                    <div class="md:col-span-2 flex items-center">
-                        <div
-                            class="bg-primary/10 text-primary px-3 py-1 font-label text-xs font-bold uppercase tracking-wider">
-                            Active
-                        </div>
-                    </div>
-                    <div class="md:col-span-1 flex justify-end">
-                        <span
-                            class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">arrow_forward</span>
-                    </div>
-                </div>
-                <!-- Row Item 2 -->
-                <div
-                    class="group grid grid-cols-1 md:grid-cols-12 gap-4 md:items-center p-6 bg-surface-container-lowest hover:bg-surface-container-low transition-colors duration-200 cursor-pointer shadow-[0px_4px_12px_rgba(25,28,25,0.03)] border border-outline-variant/15 relative">
-                    <div class="md:col-span-4 flex items-center gap-4">
-                        <img class="w-12 h-12 object-cover bg-surface-variant"
-                            data-alt="Portrait of a female guide with a natural look and practical outdoor clothing"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbIm50SGDTYd07SkszMfIfDUGCzrOKKSM_oDidaX7qG8ee7R-jdU0CInDb1-ToXtCAgXo_3PUfiRNS5OPdIsN7_LzoaKR3dUFCV4bp52nQP5sK6TzdJHPjT_mgbI4EdSTgFh3jcpwX9G7RfN8m8pafMTBPrKc0at1DxpoFjRiA892SqVhvl_b2KIoZNddx1NVlunDsj0C2ZNoe-vw84U1vLU72BEFG7BjZgFWE08bC_0ktFCKUIZClmnPZImYZ-O0yktzW5Ht5wQ4" />
-                        <div>
-                            <h3 class="font-headline font-bold text-lg text-primary leading-tight">Sarah Jenkins</h3>
-                            <span class="font-body text-xs text-outline font-mono">ID: GD-7102-S</span>
-                        </div>
-                    </div>
-                    <div class="md:col-span-3 font-body text-sm text-on-surface-variant flex flex-col">
-                        <span class="font-medium text-on-surface">Coastal Rainforest</span>
-                        <span class="text-xs">Mycology</span>
-                    </div>
-                    <div class="md:col-span-2 flex items-center gap-1">
-                        <span class="material-symbols-outlined text-primary text-[18px]"
-                            style="font-variation-settings: 'FILL' 1;">eco</span>
-                        <span class="material-symbols-outlined text-primary text-[18px]"
-                            style="font-variation-settings: 'FILL' 1;">eco</span>
-                        <span class="material-symbols-outlined text-primary text-[18px]"
-                            style="font-variation-settings: 'FILL' 1;">eco</span>
-                        <span class="material-symbols-outlined text-outline-variant/40 text-[18px]"
-                            style="font-variation-settings: 'FILL' 1;">eco</span>
-                        <span class="material-symbols-outlined text-outline-variant/40 text-[18px]"
-                            style="font-variation-settings: 'FILL' 1;">eco</span>
-                    </div>
-                    <div class="md:col-span-2 flex items-center">
-                        <div
-                            class="bg-secondary/10 text-secondary px-3 py-1 font-label text-xs font-bold uppercase tracking-wider border-l-2 border-secondary">
-                            Awaiting Approval
-                        </div>
-                    </div>
-                    <div class="md:col-span-1 flex justify-end">
-                        <span
-                            class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">arrow_forward</span>
-                    </div>
-                </div>
-                <!-- Row Item 3 -->
-                <div
-                    class="group grid grid-cols-1 md:grid-cols-12 gap-4 md:items-center p-6 bg-surface-container-lowest hover:bg-surface-container-low transition-colors duration-200 cursor-pointer shadow-[0px_4px_12px_rgba(25,28,25,0.03)] border border-outline-variant/15 relative">
-                    <div class="md:col-span-4 flex items-center gap-4">
-                        <img class="w-12 h-12 object-cover bg-surface-variant"
-                            data-alt="Portrait of a rugged male outdoors guide looking determined"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-lRTBqOGTrB9Hxi69d9bbBu_ciz1_yBTg4EcCN15NOVmItZguD88OFFiH7EqhvT_R4YbHHMs65XohPd0Yg8B5Sy45Bqyc7viw6kozZIhlJqiDgs32ji2aW6X66I_MJlD9wVmuMWGslHSmsaZo5caTDRCgvHbxHJy2HHNnx93Mxf9mVamBuDJt1uahQPLRkcEhAssz3-K0HTI96zCjDEP70-mq4ndBLOaIAvok5Y0XwvA1nkO2CU59sPpOMY4rz78AX57lqAkq9DI" />
-                        <div>
-                            <h3 class="font-headline font-bold text-lg text-primary leading-tight">Marcus Lin</h3>
-                            <span class="font-body text-xs text-outline font-mono">ID: GD-9931-E</span>
-                        </div>
-                    </div>
-                    <div class="md:col-span-3 font-body text-sm text-on-surface-variant flex flex-col">
-                        <span class="font-medium text-on-surface">Desert Canyons</span>
-                        <span class="text-xs">Geology Focus</span>
-                    </div>
-                    <div class="md:col-span-2 flex items-center gap-1">
-                        <span class="material-symbols-outlined text-primary text-[18px]"
-                            style="font-variation-settings: 'FILL' 1;">eco</span>
-                        <span class="material-symbols-outlined text-primary text-[18px]"
-                            style="font-variation-settings: 'FILL' 1;">eco</span>
-                        <span class="material-symbols-outlined text-primary text-[18px]"
-                            style="font-variation-settings: 'FILL' 1;">eco</span>
-                        <span class="material-symbols-outlined text-primary text-[18px]"
-                            style="font-variation-settings: 'FILL' 1;">eco</span>
-                        <span class="material-symbols-outlined text-primary text-[18px]"
-                            style="font-variation-settings: 'FILL' 1;">eco</span>
-                    </div>
-                    <div class="md:col-span-2 flex items-center">
-                        <div
-                            class="bg-primary/10 text-primary px-3 py-1 font-label text-xs font-bold uppercase tracking-wider">
-                            Active
-                        </div>
-                    </div>
-                    <div class="md:col-span-1 flex justify-end">
-                        <span
-                            class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">arrow_forward</span>
-                    </div>
-                </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full border-separate border-spacing-y-4">
+
+                    <!-- Header -->
+                    <thead>
+                        <tr
+                            class="hidden md:table-row bg-surface-container border-l-4 border-primary text-xs font-headline font-bold tracking-wider text-on-surface uppercase">
+                            <th class="text-left px-6 py-3">Guide Id</th>
+                            <th class="text-left px-6 py-3">Country Of Residence</th>
+                            <th class="text-left px-6 py-3">Years Of Experience</th>
+                            <th class="text-left px-6 py-3">status</th>
+                            <th class="text-right px-6 py-3">Sustainability Score</th>
+                            <th class="text-right px-6 py-3">Cancellation Rate</th>
+                            <th class="text-right px-6 py-3">Visibility</th>
+                            <th class="text-right px-6 py-3">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Row 1 -->
+                        <?php { ?>
+                            <tr
+                                class="group bg-surface-container-lowest hover:bg-surface-container-low transition cursor-pointer shadow-[0px_4px_12px_rgba(25,28,25,0.03)] border border-outline-variant/15">
+
+                                <!-- Guide -->
+                                <td class="px-6 py-4 flex items-center gap-4">
+                                    <img class="w-12 h-12 object-cover bg-surface-variant"
+                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOf8Whoy4EWmV27WzcVzcNJ6huCWBIi4YovB-VbrVpb_oHwWgnG8amp425upn7QfUdwnxsEWeEoYxmTR2I8r53uEKFtCwhIAc8_T6qf7o10x_LEOrTtRA4Xr6pH9_wIH8TcomFmdzI6qZWRpM-hTWQwNa2skp_3lifi-yleZTRP7ZoyVSGUmdAY0og_sadSFQZV26QJIxj9DpPfhmuO3KmcCX012f3L7PYc-oPqjN8qyACE_RQYgq0YoJOkcTETKDbPQCbVfDk9RA" />
+                                    <div>
+                                        <div class="font-bold text-lg text-primary"><?php echo $guide["name"]; ?></div>
+                                        <div class="text-xs text-outline font-mono">ID: GD-8492-N</div>
+                                    </div>
+                                </td>
+
+                                <!-- Specialty -->
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-on-surface-variant">
+                                        <div class="font-medium text-on-surface">Alpine Tundra</div>
+                                        <div class="text-xs">Glacial Ecology</div>
+                                    </div>
+                                </td>
+
+                                <!-- Eco rating -->
+                                <td class="px-6 py-4">
+                                    <div class="flex gap-1">
+                                        <span class="material-symbols-outlined text-primary text-[18px]"
+                                            style="font-variation-settings: 'FILL' 1;">eco</span>
+                                        <span class="material-symbols-outlined text-primary text-[18px]"
+                                            style="font-variation-settings: 'FILL' 1;">eco</span>
+                                        <span class="material-symbols-outlined text-primary text-[18px]"
+                                            style="font-variation-settings: 'FILL' 1;">eco</span>
+                                        <span class="material-symbols-outlined text-primary text-[18px]"
+                                            style="font-variation-settings: 'FILL' 1;">eco</span>
+                                        <span class="material-symbols-outlined text-outline-variant/40 text-[18px]"
+                                            style="font-variation-settings: 'FILL' 1;">eco</span>
+                                    </div>
+                                </td>
+
+                                <!-- Status -->
+                                <td class="px-6 py-4">
+                                    <span class="bg-primary/10 text-primary px-3 py-1 text-xs font-bold uppercase">
+                                        Active
+                                    </span>
+                                </td>
+
+                                <!-- Action -->
+                                <td class="px-6 py-4 text-right">
+                                    <span
+                                        class="material-symbols-outlined text-outline group-hover:text-primary transition">
+                                        arrow_forward
+                                    </span>
+                                </td>
+
+                            </tr>
+                        <?php } ?>
+                    </tbody>
+                </table>
             </div>
             <!-- Pagination Brutalist -->
             <div class="mt-12 flex justify-between items-center border-t border-outline-variant/20 pt-6">
@@ -188,4 +136,3 @@ require_once("../components/AdminHead.php");
 </body>
 
 </html>
-
