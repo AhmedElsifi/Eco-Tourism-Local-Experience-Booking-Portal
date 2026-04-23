@@ -38,6 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
     }
     
+    // Update booking status (cancel)
     if ($_POST['action'] === 'cancel_booking') {
         $bookingId = $_POST['booking_id'] ?? 0;
         if ($bookingId) {
@@ -48,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 }
 
+// Get schedule/bookings
 $schedule = [];
 if ($guideId) {
     $stmt = $connect->prepare("
@@ -66,6 +68,7 @@ if ($guideId) {
     $stmt->execute([$guideId]);
     $schedule = $stmt->fetchAll();
     
+    // Get available tours for blocking time
     $stmt = $connect->prepare("
         SELECT t.tour_id, t.tour_name, tv.tour_version_id, tv.price_per_person
         FROM tour t
