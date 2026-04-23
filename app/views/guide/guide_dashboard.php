@@ -1,3 +1,8 @@
+<?php 
+$page = 'dashboard';
+require_once __DIR__ . '/header.php';
+?>
+
 <!DOCTYPE html>
 
 <html class="light" lang="en">
@@ -111,7 +116,7 @@
                 </div>
             </div>
         </div>
-        <nav class="flex-1 overflow-y-auto py-4">
+<nav class="flex-1 overflow-y-auto py-4">
             <ul class="flex flex-col font-['Manrope'] font-bold tracking-tight uppercase">
                 <li>
                     <a class="bg-[#dbe7dd] dark:bg-stone-700 text-[#2d4b37] font-semibold px-6 py-4 flex items-center gap-4 border-l-4 border-[#2d4b37]"
@@ -122,16 +127,79 @@
                 </li>
                 <li>
                     <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
-                        href="guide_schedule_management.php">
+                        href="all_functions.php?tab=schedule">
                         <span class="material-symbols-outlined">calendar_today</span>
                         <span>Schedule</span>
                     </a>
                 </li>
                 <li>
                     <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
-                        href="earnings_payouts.php">
+                        href="all_functions.php?tab=earnings">
                         <span class="material-symbols-outlined">payments</span>
-                        Earnings
+                        <span>Earnings</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=reports">
+                        <span class="material-symbols-outlined">article</span>
+                        <span>Field Reports</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=certs">
+                        <span class="material-symbols-outlined">verified</span>
+                        <span>Certifications</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=languages">
+                        <span class="material-symbols-outlined">translate</span>
+                        <span>Languages</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=tags">
+                        <span class="material-symbols-outlined">sell</span>
+                        <span>Impact Tags</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=itinerary">
+                        <span class="material-symbols-outlined">map</span>
+                        <span>Itinerary</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=badges">
+                        <span class="material-symbols-outlined">workspace_premium</span>
+                        <span>Badges</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=shadowing">
+                        <span class="material-symbols-outlined">group</span>
+                        <span>Shadowing</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=identity">
+                        <span class="material-symbols-outlined">badge</span>
+                        <span>Identity</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=vouchers">
+                        <span class="material-symbols-outlined">qr_code</span>
+                        <span>Vouchers</span>
                     </a>
                 </li>
             </ul>
@@ -140,7 +208,7 @@
             <ul class="flex flex-col font-['Manrope'] font-bold tracking-tight uppercase">
                 <li>
                     <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-3 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
-                        href="#">
+                        href="../../index.php?logout=1">
                         <span class="material-symbols-outlined">logout</span>
                         Logout
                     </a>
@@ -165,15 +233,15 @@
                 <div class="flex flex-col gap-2 relative z-10">
                     <h1
                         class="font-headline text-4xl lg:text-[3.5rem] leading-none tracking-tight font-extrabold text-on-primary">
-                        Hello, Alexander Thorne</h1>
+                        Hello, <?php echo htmlspecialchars($guide['name'] ?? 'Guide'); ?></h1>
                     <p class="font-body text-on-primary-container text-lg max-w-2xl mt-4">Your guide ecosystem is
                         thriving. Here is your operational overview for the current season.</p>
                 </div>
-                <button
+                <a href="create_new_experience.php"
                     class="relative z-10 bg-secondary-container text-on-secondary-container px-6 py-4 font-label font-bold uppercase tracking-wider text-sm hover:bg-secondary-fixed hover:text-on-secondary-fixed transition-colors flex items-center gap-2">
                     <span class="material-symbols-outlined text-[18px]">add</span>
                     Create New Experience
-                </button>
+                </a>
             </section>
             <!-- Metrics Bento Grid -->
             <section class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -234,13 +302,13 @@
                             class="material-symbols-outlined text-tertiary group-hover:scale-110 transition-transform duration-300">account_balance_wallet</span>
                     </div>
                     <div class="flex items-baseline gap-2 mt-2">
-                        <span class="font-headline text-5xl font-black text-on-surface tracking-tighter">$3,450<span
-                                class="text-2xl text-on-surface-variant">.00</span></span>
+                        <span class="font-headline text-5xl font-black text-on-surface tracking-tighter">$<?php echo number_format($wallet['available_balance'] ?? 0, 2); ?><span
+                                class="text-2xl text-on-surface-variant"></span></span>
                     </div>
                     <div class="mt-auto pt-4 border-t border-outline-variant/30 flex items-center justify-between">
-                        <span class="font-body text-sm text-on-surface-variant">Next payout: Oct 15</span>
-                        <button
-                            class="text-sm font-bold text-tertiary hover:underline uppercase tracking-wide">Withdraw</button>
+                        <span class="font-body text-sm text-on-surface-variant">Pending: $<?php echo number_format($wallet['pending_balance'] ?? 0, 2); ?></span>
+                        <a href="earnings_payouts.php"
+                            class="text-sm font-bold text-tertiary hover:underline uppercase tracking-wide">Withdraw</a>
                     </div>
                 </div>
             </section>
@@ -268,121 +336,69 @@
                             </tr>
                         </thead>
                         <tbody class="font-body text-sm text-on-surface">
-                            <!-- Row 1 -->
+                            <?php if (!empty($schedule)): ?>
+                                <?php foreach ($schedule as $index => $booking): ?>
+                            <tr class="hover:bg-surface-container-low transition-colors group cursor-pointer <?php echo $index % 2 === 0 ? 'bg-surface-container-lowest' : ''; ?>">
+                                <td class="p-4 font-mono text-outline">#TR-<?php echo str_pad($booking['booking_id'], 4, '0', STR_PAD_LEFT); ?></td>
+                                <td class="p-4 font-semibold text-on-surface group-hover:text-primary transition-colors">
+                                    <?php echo htmlspecialchars($booking['tour_name'] ?? 'Tour'); ?></td>
+                                <td class="p-4 text-on-surface-variant flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[16px] text-outline">pin_drop</span>
+                                    <?php echo htmlspecialChars($booking['location_name'] ?? 'Location'); ?>
+                                </td>
+                                <td class="p-4">
+                                    <?php 
+                                    $statusClass = match($booking['status'] ?? '') {
+                                        'confirmed' => 'bg-primary-fixed text-on-primary-fixed-variant border border-primary-fixed-dim',
+                                        'pending' => 'bg-surface-variant text-on-surface-variant border border-outline-variant',
+                                        'completed' => 'bg-tertiary-fixed text-on-tertiary-fixed-variant border border-tertiary-fixed-dim',
+                                        'cancelled' => 'bg-error-container text-on-error-container border border-error/30',
+                                        default => 'bg-surface-variant text-on-surface-variant border border-outline-variant'
+                                    };
+                                    $statusIcon = match($booking['status'] ?? '') {
+                                        'confirmed' => 'check_circle',
+                                        'pending' => 'pending',
+                                        'completed' => 'block',
+                                        'cancelled' => 'cancel',
+                                        default => 'schedule'
+                                    };
+                                    ?>
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold uppercase tracking-wider <?php echo $statusClass; ?>">
+                                        <span class="material-symbols-outlined text-[14px]"><?php echo $statusIcon; ?></span> <?php echo ucfirst($booking['status'] ?? 'Unknown'); ?>
+                                    </span>
+                                </td>
+                                <td class="p-4 text-on-surface-variant"><?php echo date('M d, Y', strtotime($booking['start_time'] ?? 'now')); ?></td>
+                                <td class="p-4 text-on-surface-variant"><?php echo date('M d, Y', strtotime($booking['end_time'] ?? 'now')); ?></td>
+                                <td class="p-4 text-right">
+                                    <a href="tour_management_view.php?id=<?php echo $booking['tour_id'] ?? ''; ?>"
+                                        class="text-outline hover:text-primary opacity-0 group-hover:opacity-100 transition-all">
+                                        <span class="material-symbols-outlined">more_vert</span>
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="h-4 bg-surface-bright" colspan="7"></td>
+                            </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
                             <tr class="hover:bg-surface-container-low transition-colors group cursor-pointer">
-                                <td class="p-4 font-mono text-outline">#TR-8092</td>
-                                <td
-                                    class="p-4 font-semibold text-on-surface group-hover:text-primary transition-colors">
-                                    Coastal Foraging Expedition</td>
+                                <td class="p-4 font-mono text-outline">#TR-0000</td>
+                                <td class="p-4 font-semibold text-on-surface group-hover:text-primary transition-colors">No scheduled tours</td>
                                 <td class="p-4 text-on-surface-variant flex items-center gap-1">
                                     <span class="material-symbols-outlined text-[16px] text-outline">pin_drop</span>
-                                    Pacific Rim
+                                    Schedule a tour to get started
                                 </td>
                                 <td class="p-4">
-                                    <span
-                                        class="inline-flex items-center gap-1 bg-primary-fixed text-on-primary-fixed-variant px-2 py-1 text-xs font-bold uppercase tracking-wider border border-primary-fixed-dim">
-                                        <span class="material-symbols-outlined text-[14px]">check_circle</span> Approved
+                                    <span class="inline-flex items-center gap-1 bg-surface-variant text-on-surface-variant px-2 py-1 text-xs font-bold uppercase tracking-wider border border-outline-variant">
+                                        <span class="material-symbols-outlined text-[14px]">schedule</span> None
                                     </span>
                                 </td>
-                                <td class="p-4 text-on-surface-variant">Oct 12, 2023</td>
-                                <td class="p-4 text-on-surface-variant">Oct 14, 2023</td>
+                                <td class="p-4 text-on-surface-variant">-</td>
+                                <td class="p-4 text-on-surface-variant">-</td>
                                 <td class="p-4 text-right">
-                                    <button
-                                        class="text-outline hover:text-primary opacity-0 group-hover:opacity-100 transition-all">
-                                        <span class="material-symbols-outlined">more_vert</span>
-                                    </button>
                                 </td>
                             </tr>
-                            <!-- Spacer Row (instead of border lines) -->
-                            <tr>
-                                <td class="h-4 bg-surface-bright" colspan="7"></td>
-                            </tr>
-                            <!-- Row 2 -->
-                            <tr
-                                class="hover:bg-surface-container-low transition-colors group cursor-pointer bg-surface-container-lowest">
-                                <td class="p-4 font-mono text-outline">#TR-8105</td>
-                                <td
-                                    class="p-4 font-semibold text-on-surface group-hover:text-primary transition-colors">
-                                    Alpine Ridge Ascent</td>
-                                <td class="p-4 text-on-surface-variant flex items-center gap-1">
-                                    <span class="material-symbols-outlined text-[16px] text-outline">pin_drop</span>
-                                    Cascade Range
-                                </td>
-                                <td class="p-4">
-                                    <span
-                                        class="inline-flex items-center gap-1 bg-surface-variant text-on-surface-variant px-2 py-1 text-xs font-bold uppercase tracking-wider border border-outline-variant">
-                                        <span class="material-symbols-outlined text-[14px]">pending</span> Waiting...
-                                    </span>
-                                </td>
-                                <td class="p-4 text-on-surface-variant">Oct 20, 2023</td>
-                                <td class="p-4 text-on-surface-variant">Oct 22, 2023</td>
-                                <td class="p-4 text-right">
-                                    <button
-                                        class="text-outline hover:text-primary opacity-0 group-hover:opacity-100 transition-all">
-                                        <span class="material-symbols-outlined">more_vert</span>
-                                    </button>
-                                </td>
-                            </tr>
-                            <!-- Spacer Row -->
-                            <tr>
-                                <td class="h-4 bg-surface-bright" colspan="7"></td>
-                            </tr>
-                            <!-- Row 3 -->
-                            <tr
-                                class="hover:bg-surface-container-low transition-colors group cursor-pointer bg-surface-container-lowest">
-                                <td class="p-4 font-mono text-outline">#TR-8044</td>
-                                <td
-                                    class="p-4 font-semibold text-on-surface group-hover:text-primary transition-colors">
-                                    Desert Night Photography</td>
-                                <td class="p-4 text-on-surface-variant flex items-center gap-1">
-                                    <span class="material-symbols-outlined text-[16px] text-outline">pin_drop</span>
-                                    Mojave
-                                </td>
-                                <td class="p-4">
-                                    <span
-                                        class="inline-flex items-center gap-1 bg-error-container text-on-error-container px-2 py-1 text-xs font-bold uppercase tracking-wider border border-error/30">
-                                        <span class="material-symbols-outlined text-[14px]">cancel</span> Cancelled
-                                    </span>
-                                </td>
-                                <td class="p-4 text-on-surface-variant">Nov 02, 2023</td>
-                                <td class="p-4 text-on-surface-variant">Nov 03, 2023</td>
-                                <td class="p-4 text-right">
-                                    <button
-                                        class="text-outline hover:text-primary opacity-0 group-hover:opacity-100 transition-all">
-                                        <span class="material-symbols-outlined">more_vert</span>
-                                    </button>
-                                </td>
-                            </tr>
-                            <!-- Spacer Row -->
-                            <tr>
-                                <td class="h-4 bg-surface-bright" colspan="7"></td>
-                            </tr>
-                            <!-- Row 4 -->
-                            <tr
-                                class="hover:bg-surface-container-low transition-colors group cursor-pointer bg-surface-container-lowest">
-                                <td class="p-4 font-mono text-outline">#TR-8112</td>
-                                <td
-                                    class="p-4 font-semibold text-on-surface group-hover:text-primary transition-colors">
-                                    Old Growth Canopy Tour</td>
-                                <td class="p-4 text-on-surface-variant flex items-center gap-1">
-                                    <span class="material-symbols-outlined text-[16px] text-outline">pin_drop</span>
-                                    Redwood National
-                                </td>
-                                <td class="p-4">
-                                    <span
-                                        class="inline-flex items-center gap-1 bg-tertiary-fixed text-on-tertiary-fixed-variant px-2 py-1 text-xs font-bold uppercase tracking-wider border border-tertiary-fixed-dim">
-                                        <span class="material-symbols-outlined text-[14px]">block</span> Disapproved
-                                    </span>
-                                </td>
-                                <td class="p-4 text-on-surface-variant">Nov 15, 2023</td>
-                                <td class="p-4 text-on-surface-variant">Nov 15, 2023</td>
-                                <td class="p-4 text-right">
-                                    <button
-                                        class="text-outline hover:text-primary opacity-0 group-hover:opacity-100 transition-all">
-                                        <span class="material-symbols-outlined">more_vert</span>
-                                    </button>
-                                </td>
-                            </tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>

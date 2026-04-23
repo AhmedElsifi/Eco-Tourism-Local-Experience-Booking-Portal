@@ -120,16 +120,58 @@
                 </li>
                 <li>
                     <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
-                        href="guide_schedule_management.php">
+                        href="all_functions.php?tab=schedule">
                         <span class="material-symbols-outlined">calendar_today</span>
-                        <span>Schedule</span>
+                        Schedule
                     </a>
                 </li>
                 <li>
                     <a class="bg-[#dbe7dd] dark:bg-stone-700 text-[#2d4b37] font-semibold px-6 py-4 flex items-center gap-4 border-l-4 border-[#2d4b37]"
-                        href="earnings_payouts.php">
+                        href="all_functions.php?tab=earnings">
                         <span class="material-symbols-outlined">payments</span>
                         Earnings
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=reports">
+                        <span class="material-symbols-outlined">article</span>
+                        Field Reports
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=certs">
+                        <span class="material-symbols-outlined">verified</span>
+                        Certifications
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=tags">
+                        <span class="material-symbols-outlined">sell</span>
+                        Impact Tags
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=badges">
+                        <span class="material-symbols-outlined">workspace_premium</span>
+                        Badges
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=identity">
+                        <span class="material-symbols-outlined">badge</span>
+                        Identity
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=vouchers">
+                        <span class="material-symbols-outlined">qr_code</span>
+                        Vouchers
                     </a>
                 </li>
             </ul>
@@ -138,7 +180,7 @@
             <ul class="flex flex-col font-['Manrope'] font-bold tracking-tight uppercase">
                 <li>
                     <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-3 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
-                        href="#">
+                        href="../../index.php?logout=1">
                         <span class="material-symbols-outlined">logout</span>
                         Logout
                     </a>

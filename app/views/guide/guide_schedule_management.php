@@ -1,3 +1,82 @@
+<?php
+session_start();
+
+if (!isset($connect)) {
+    require_once dirname(__DIR__, 3) . '/core/connection.php';
+}
+
+$guideId = $_SESSION['guide_id'] ?? $_SESSION['user_id'] ?? 0;
+$message = '';
+$error = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    
+    if ($_POST['action'] === 'check_conflict') {
+        $startTime = $_POST['start_time'] ?? '';
+        $endTime = $_POST['end_time'] ?? '';
+        
+        if ($startTime && $endTime) {
+            $stmt = $connect->prepare("
+                SELECT COUNT(*) as cnt FROM booking
+                WHERE guide_id = ? AND status IN ('pending', 'confirmed')
+                AND (
+                    (start_time < ? AND end_time > ?)
+                    OR (start_time < ? AND end_time > ?)
+                    OR (start_time >= ? AND end_time <= ?)
+                )
+            ");
+            $stmt->execute([$guideId, $endTime, $startTime, $endTime, $startTime, $startTime, $endTime]);
+            $result = $stmt->fetch();
+            
+            if ($result['cnt'] > 0) {
+                $conflict = true;
+                echo json_encode(['success' => false, 'message' => 'Schedule conflict! This time overlaps with an existing booking.']);
+            } else {
+                echo json_encode(['success' => true, 'message' => 'Time slot available!']);
+            }
+            exit;
+        }
+    }
+    
+    if ($_POST['action'] === 'cancel_booking') {
+        $bookingId = $_POST['booking_id'] ?? 0;
+        if ($bookingId) {
+            $stmt = $connect->prepare("UPDATE booking SET status = 'cancelled', cancelled_at = NOW() WHERE booking_id = ? AND guide_id = ?");
+            $stmt->execute([$bookingId, $guideId]);
+            $message = "Booking cancelled successfully";
+        }
+    }
+}
+
+$schedule = [];
+if ($guideId) {
+    $stmt = $connect->prepare("
+        SELECT b.booking_id, b.start_time, b.end_time, b.status, b.total_price, b.created_at,
+               t.tour_name, l.location_name, u.name as traveler_name, tr.nationality
+        FROM booking b
+        JOIN tour_version tv ON b.tour_version_id = tv.tour_version_id
+        JOIN tour t ON tv.tour_id = t.tour_id
+        LEFT JOIN location l ON t.location_id = l.location_id
+        JOIN traveler tr ON b.traveler_id = tr.traveler_id
+        JOIN users u ON tr.traveler_id = u.user_id
+        WHERE b.guide_id = ?
+        ORDER BY b.start_time DESC
+        LIMIT 30
+    ");
+    $stmt->execute([$guideId]);
+    $schedule = $stmt->fetchAll();
+    
+    $stmt = $connect->prepare("
+        SELECT t.tour_id, t.tour_name, tv.tour_version_id, tv.price_per_person
+        FROM tour t
+        JOIN tour_version tv ON t.tour_id = tv.tour_id
+        WHERE t.guide_id = ? AND t.status = 'active' AND tv.is_active = 1
+    ");
+    $stmt->execute([$guideId]);
+    $availableTours = $stmt->fetchAll();
+}
+?>
+
 <!DOCTYPE html>
 
 <html class="light" lang="en">
@@ -149,18 +228,59 @@
                     </a>
                 </li>
                 <li>
-                    <a
-                        class="bg-[#dbe7dd] dark:bg-stone-700 text-[#2d4b37] font-semibold px-6 py-4 flex items-center gap-4 border-l-4 border-[#2d4b37]"
-                        href="guide_schedule_management.php">
+                    <a class="bg-[#dbe7dd] dark:bg-stone-700 text-[#2d4b37] font-semibold px-6 py-4 flex items-center gap-4 border-l-4 border-[#2d4b37]"
+                        href="all_functions.php?tab=schedule">
                         <span class="material-symbols-outlined">calendar_today</span>
-                        <span>Schedule</span>
+                        Schedule
                     </a>
                 </li>
                 <li>
                     <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
-                        href="earnings_payouts.php">
+                        href="all_functions.php?tab=earnings">
                         <span class="material-symbols-outlined">payments</span>
                         Earnings
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=reports">
+                        <span class="material-symbols-outlined">article</span>
+                        Field Reports
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=certs">
+                        <span class="material-symbols-outlined">verified</span>
+                        Certifications
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=tags">
+                        <span class="material-symbols-outlined">sell</span>
+                        Impact Tags
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=badges">
+                        <span class="material-symbols-outlined">workspace_premium</span>
+                        Badges
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=identity">
+                        <span class="material-symbols-outlined">badge</span>
+                        Identity
+                    </a>
+                </li>
+                <li>
+                    <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-4 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
+                        href="all_functions.php?tab=vouchers">
+                        <span class="material-symbols-outlined">qr_code</span>
+                        Vouchers
                     </a>
                 </li>
             </ul>
@@ -169,7 +289,7 @@
             <ul class="flex flex-col font-['Manrope'] font-bold tracking-tight uppercase">
                 <li>
                     <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-3 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
-                        href="#">
+                        href="../../index.php?logout=1">
                         <span class="material-symbols-outlined">logout</span>
                         Logout
                     </a>
