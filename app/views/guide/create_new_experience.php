@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     } else {
         try {
             $guideId = $_SESSION['guide_id'] ?? $_SESSION['user_id'];
-
+            
             $uploadDir = dirname(__DIR__, 3) . '/public/uploads/tours/';
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0777, true);

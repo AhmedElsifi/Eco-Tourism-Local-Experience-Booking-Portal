@@ -67,7 +67,6 @@ try {
     $connect->exec("INSERT IGNORE INTO tour_impact_tag (tour_id, tag_name) VALUES ($tourId, 'Wildlife Conservation')");
     $connect->exec("INSERT IGNORE INTO tour_impact_tag (tour_id, tag_name) VALUES ($tourId, 'Zero Waste')");
 } catch (Exception $e) {
-    echo "Error adding impact tags: " . $e->getMessage() . "<br>";
 }
 
 echo "<br><b>Done!</b><br>";

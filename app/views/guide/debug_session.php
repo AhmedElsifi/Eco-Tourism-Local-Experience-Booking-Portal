@@ -39,6 +39,7 @@ session_start();
         $guideData = $stmt->fetch();
         echo "\nGuide Data:\n";
         print_r($guideData);
+        
         $stmt = $connect->prepare("SELECT * FROM guide_wallet WHERE guide_id = ?");
         $stmt->execute([$_SESSION['user_id']]);
         $wallet = $stmt->fetch();

@@ -174,6 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if (empty($endTime)) {
         $fieldErrors['shadow_end_time'] = 'Please select end date';
     }
+    
     if ($targetGuideId == 0) {
         $targetGuideId = $guideId;
     }
