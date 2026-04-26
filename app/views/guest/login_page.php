@@ -31,12 +31,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             
+            $basePath = dirname($_SERVER['SCRIPT_NAME'], 2);
+            
             if ($user['role'] === 'guide') {
-                header('Location: ../guide/guide_dashboard.php');
+                header('Location: /eco_full/app/views/guide/guide_dashboard.php');
+            } elseif ($user['role'] === 'traveler') {
+                $stmt = $connect->prepare("SELECT traveler_id FROM traveler WHERE traveler_id = ?");
+                $stmt->execute([$user['user_id']]);
+                $traveler = $stmt->fetch();
+                if (!$traveler) {
+                    $stmt = $connect->prepare("INSERT INTO traveler (traveler_id, nationality, total_carbon_offset) VALUES (?, 'Unknown', 0)");
+                    $stmt->execute([$user['user_id']]);
+                }
+                header('Location: /eco_full/app/views/traveler/traveler_website.php');
+                exit;
             } elseif ($user['role'] === 'super_admin' || $user['role'] === 'auditor') {
-                header('Location: ../admin/dashboard.php');
+                header('Location: /eco_full/app/views/admin/dashboard.php');
             } else {
-                header('Location: ../../index.php');
+                header('Location: /eco_full/index.php');
             }
             exit;
         } else {

@@ -1,56 +1,34 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if (!isset($connect)) {
     require_once dirname(__DIR__, 3) . '/core/connection.php';
 }
 
-$bookingId = $_GET['booking_id'] ?? 0;
-$guideId = $_SESSION['guide_id'] ?? $_SESSION['user_id'] ?? 0;
-$message = '';
-$error = '';
-$fieldErrors = [];
+require_once 'D:/xam/htdocs/eco_full/app/controllers/GuideController.php';
 
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'guide') {
+    header("Location: /eco_full/app/views/guest/login_page.php");
+    exit;
+}
+
+$controller = new GuideController();
+$bookingId = $_GET['booking_id'] ?? 0;
+$message = '';
 $booking = null;
-if ($bookingId && $guideId) {
-    $stmt = $connect->prepare("
-        SELECT b.*, t.tour_id, t.tour_name, t.tour_type, l.location_name, l.country, l.region,
-               tv.price_per_person, tv.max_capacity, u.name as traveler_name, u.email as traveler_email
-        FROM booking b
-        JOIN tour_version tv ON b.tour_version_id = tv.tour_version_id
-        JOIN tour t ON tv.tour_id = t.tour_id
-        LEFT JOIN location l ON t.location_id = l.location_id
-        JOIN traveler tr ON b.traveler_id = tr.traveler_id
-        JOIN users u ON tr.traveler_id = u.user_id
-        WHERE b.booking_id = ? AND b.guide_id = ?
-    ");
-    $stmt->execute([$bookingId, $guideId]);
-    $booking = $stmt->fetch();
+$fieldReports = [];
+
+if ($bookingId) {
+    $bookingData = $controller->getBookingDetails($bookingId);
+    $booking = $bookingData['booking'] ?? null;
+    $fieldReports = $bookingData['fieldReports'] ?? [];
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'post_report') {
-    $content = trim($_POST['report_content'] ?? '');
-    
-    if (empty($content)) {
-        $fieldErrors['report_content'] = 'Please enter report content';
-    } elseif (strlen($content) < 10) {
-        $fieldErrors['report_content'] = 'Report must be at least 10 characters';
-    } elseif ($booking) {
-        $stmt = $connect->prepare("INSERT INTO field_reports (guide_id, tour_id, content_text) VALUES (?, ?, ?)");
-        $stmt->execute([$guideId, $booking['tour_id'], $content]);
-        $message = 'Field report posted successfully';
-    }
-}
-
-$fieldReports = [];
-if ($booking) {
-    $stmt = $connect->prepare("
-        SELECT * FROM field_reports 
-        WHERE guide_id = ? AND tour_id = ?
-        ORDER BY created_at DESC
-    ");
-    $stmt->execute([$guideId, $booking['tour_id']]);
-    $fieldReports = $stmt->fetchAll();
+    $result = $controller->postFieldReportApi($booking['tour_id'] ?? 0, $_POST['report_content'] ?? '');
+    $message = $result['message'] ?? '';
 }
 ?>
 
@@ -124,7 +102,7 @@ if ($booking) {
         <div class="mt-auto border-t border-[#727972]/15 pt-4 pb-6">
             <ul class="flex flex-col font-['Manrope'] font-bold tracking-tight uppercase">
                 <li>
-                    <a class="text-[#2d4b37] font-medium px-6 py-3 flex items-center gap-4 hover:bg-[#edeee9]" href="../../index.php?logout=1">
+                    <a class="text-[#2d4b37] font-medium px-6 py-3 flex items-center gap-4 hover:bg-[#edeee9]" href="/eco_full/index.php?logout=1">
                         <span class="material-symbols-outlined">logout</span>
                         Logout
                     </a>
