@@ -1,16 +1,27 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if (!isset($connect)) {
     require_once dirname(__DIR__, 3) . '/core/connection.php';
 }
 
+require_once 'D:/xam/htdocs/eco_full/app/controllers/GuideController.php';
+
+$controller = new GuideController();
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'guide') {
+    header("Location: /eco_full/app/views/guest/login_page.php");
+    exit;
+}
+
 $guideId = $_SESSION['guide_id'] ?? $_SESSION['user_id'] ?? 0;
 $message = '';
 $error = '';
-$activeTab = $_GET['tab'] ?? 'schedule';
 $fieldErrors = [];
+$activeTab = $_GET['tab'] ?? 'schedule';
 
+<<<<<<< HEAD
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'withdraw') {
     $amount = floatval($_POST['amount'] ?? 0);
 
@@ -286,7 +297,55 @@ if ($guideId) {
     $stmt = $connect->prepare("SELECT g.*, u.name FROM guide g JOIN users u ON g.guide_id = u.user_id WHERE g.guide_id = ?");
     $stmt->execute([$guideId]);
     $guideInfo = $stmt->fetch();
+=======
+$result = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    $result = $controller->processAction();
+    $message = $result['message'] ?? '';
+    $fieldErrors = $result['errors'] ?? [];
+    $error = $result['error'] ?? '';
 }
+
+$guide = $controller->getGuideData();
+$wallet = $controller->getGuideWallet();
+$bookings = $controller->getGuideBookings();
+$tours = $controller->getGuideTours();
+
+$withdrawals = [];
+$fieldReports = [];
+$certifications = [];
+$langCerts = [];
+$languages = [];
+$badges = [];
+$shadowings = [];
+
+if ($guideId) {
+    $stmt = $connect->prepare("SELECT * FROM withdrawal_requests WHERE guide_id = ? ORDER BY requested_at DESC LIMIT 10");
+    $stmt->execute([$guideId]);
+    $withdrawals = $stmt->fetchAll();
+    $stmt = $connect->prepare("SELECT fr.*, t.tour_name FROM field_reports fr LEFT JOIN tour t ON fr.tour_id = t.tour_id WHERE fr.guide_id = ? ORDER BY fr.created_at DESC LIMIT 10");
+    $stmt->execute([$guideId]);
+    $fieldReports = $stmt->fetchAll();
+    $stmt = $connect->prepare("SELECT * FROM eco_certifications WHERE guide_id = ? ORDER BY issue_date DESC");
+    $stmt->execute([$guideId]);
+    $certifications = $stmt->fetchAll();
+    $stmt = $connect->prepare("SELECT lc.*, l.language_name FROM language_certifications lc JOIN languages l ON lc.language_id = l.language_id WHERE lc.guide_id = ? ORDER BY lc.issue_date DESC");
+    $stmt->execute([$guideId]);
+    $langCerts = $stmt->fetchAll();
+    $stmt = $connect->query("SELECT * FROM languages");
+    $languages = $stmt->fetchAll();
+    $stmt = $connect->prepare("SELECT * FROM guide_badges WHERE guide_id = ? ORDER BY awarded_at DESC");
+    $stmt->execute([$guideId]);
+    $badges = $stmt->fetchAll();
+    $stmt = $connect->prepare("SELECT gs.*, t.tour_name, u1.name as senior_name, u2.name as trainee_name FROM guide_shadowing gs JOIN tour t ON gs.tour_id = t.tour_id JOIN users u1 ON gs.senior_guide_id = u1.user_id JOIN users u2 ON gs.trainee_guide_id = u2.user_id WHERE gs.senior_guide_id = ? OR gs.trainee_guide_id = ? ORDER BY gs.start_time DESC LIMIT 10");
+    $stmt->execute([$guideId, $guideId]);
+    $shadowings = $stmt->fetchAll();
+>>>>>>> 0d47ce4fe5c693675642f2e119ebb9968f9a9b4f
+}
+
+$stmt = $connect->prepare("SELECT g.*, u.name FROM guide g JOIN users u ON g.guide_id = u.user_id WHERE g.guide_id = ?");
+$stmt->execute([$guideId]);
+$guideInfo = $stmt->fetch();
 
 $badgeTypes = ['Expert Guide', 'Conservation Champion', 'First Aid Certified', 'Language Pro', 'Senior Guide', 'Eco-Tourism Pioneer'];
 ?>
@@ -441,8 +500,12 @@ $badgeTypes = ['Expert Guide', 'Conservation Champion', 'First Aid Certified', '
         <div class="mt-auto border-t border-[#727972]/15 pt-4 pb-6">
             <ul class="flex flex-col font-['Manrope'] font-bold tracking-tight uppercase">
                 <li>
+<<<<<<< HEAD
                     <a class="text-[#2d4b37] font-medium px-6 py-3 flex items-center gap-4 hover:bg-[#edeee9]"
                         href="../../index.php?logout=1">
+=======
+                    <a class="text-[#2d4b37] font-medium px-6 py-3 flex items-center gap-4 hover:bg-[#edeee9]" href="/eco_full/index.php?logout=1">
+>>>>>>> 0d47ce4fe5c693675642f2e119ebb9968f9a9b4f
                         <span class="material-symbols-outlined">logout</span>
                         Logout
                     </a>

@@ -1,15 +1,27 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if (!isset($connect)) {
     require_once dirname(__DIR__, 3) . '/core/connection.php';
 }
 
+require_once 'D:/xam/htdocs/eco_full/app/controllers/GuideController.php';
+
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'guide') {
+    header("Location: /eco_full/app/views/guest/login_page.php");
+    exit;
+}
+
+$controller = new GuideController();
+$guideId = $_SESSION['guide_id'] ?? $_SESSION['user_id'] ?? 0;
 $message = '';
 $error = '';
 $fieldErrors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create_tour') {
+<<<<<<< HEAD
     $tourName = $_POST['tour_name'] ?? '';
     $tourType = $_POST['tour_type'] ?? 'eco';
     $locationId = $_POST['location_id'] ?? 1;
@@ -132,8 +144,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $error = 'Error: ' . $e->getMessage();
         }
     }
+=======
+    $result = $controller->processAction();
+    $message = $result['message'] ?? '';
+    $error = $result['error'] ?? '';
+>>>>>>> 0d47ce4fe5c693675642f2e119ebb9968f9a9b4f
 }
 
+$locations = [];
 $stmt = $connect->query("SELECT location_id, location_name, country FROM location ORDER BY location_name");
 $locations = $stmt->fetchAll();
 ?>
@@ -348,7 +366,7 @@ $locations = $stmt->fetchAll();
             <ul class="flex flex-col font-['Manrope'] font-bold tracking-tight uppercase">
                 <li>
                     <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-3 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
-                        href="../../index.php?logout=1">
+                        href="/eco_full/index.php?logout=1">
                         <span class="material-symbols-outlined">logout</span>
                         Logout
                     </a>

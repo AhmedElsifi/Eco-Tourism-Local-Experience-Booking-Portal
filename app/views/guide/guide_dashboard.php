@@ -208,7 +208,7 @@ require_once __DIR__ . '/header.php';
             <ul class="flex flex-col font-['Manrope'] font-bold tracking-tight uppercase">
                 <li>
                     <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-3 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
-                        href="../../index.php?logout=1">
+                        href="/eco_full/index.php?logout=1">
                         <span class="material-symbols-outlined">logout</span>
                         Logout
                     </a>
@@ -338,7 +338,7 @@ require_once __DIR__ . '/header.php';
                         <tbody class="font-body text-sm text-on-surface">
                             <?php if (!empty($schedule)): ?>
                                 <?php foreach ($schedule as $index => $booking): ?>
-                            <tr class="hover:bg-surface-container-low transition-colors group cursor-pointer <?php echo $index % 2 === 0 ? 'bg-surface-container-lowest' : ''; ?>">
+                            <tr onclick="window.location.href='tour_detail.php?booking_id=<?php echo $booking['booking_id']; ?>'" class="hover:bg-surface-container-low transition-colors group cursor-pointer <?php echo $index % 2 === 0 ? 'bg-surface-container-lowest' : ''; ?>">
                                 <td class="p-4 font-mono text-outline">#TR-<?php echo str_pad($booking['booking_id'], 4, '0', STR_PAD_LEFT); ?></td>
                                 <td class="p-4 font-semibold text-on-surface group-hover:text-primary transition-colors">
                                     <?php echo htmlspecialchars($booking['tour_name'] ?? 'Tour'); ?></td>

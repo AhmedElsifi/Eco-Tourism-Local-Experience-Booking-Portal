@@ -1,6 +1,8 @@
 <?php
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if (!isset($connect)) {
     require_once dirname(__DIR__, 3) . '/core/connection.php';
