@@ -1,15 +1,13 @@
 <?php
 $activePage = "Dashboard";
 session_start();
-require_once("../../../core/connection.php");
-require_once("../../models/TravelerModel.php");
-require_once("../../models/GuideModel.php");
-require_once("../../models/RegionalAuditorModel.php");
-require_once("../../models/LogsModel.php");
-$travelerModel = new TravelerModel($connect);
-$guideModel = new GuideModel($connect);
-$regionalAucitorModel = new RegionalAuditorModel($connect);
-$logsModel = new LogsModel($connect);
+
+if (!isset($connect)) {
+    require_once dirname(__DIR__, 3) . '/core/connection.php';
+}
+
+require_once("../../controllers/AdminController.php");
+
 $title = "Super Admin Dashboard - EcoPortal Admin";
 require_once("../components/AdminHead.php");
 ?>

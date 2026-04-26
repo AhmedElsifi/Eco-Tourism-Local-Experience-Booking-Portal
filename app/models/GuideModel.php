@@ -207,7 +207,7 @@ class GuideModel
             JOIN users u ON tr.traveler_id = u.user_id
             WHERE b.guide_id = ?
         ";
-        
+
         if ($status) {
             $sql .= " AND b.status = ?";
             $stmt = $this->db->prepare($sql);
@@ -278,4 +278,14 @@ class GuideModel
         $stmt->execute($params);
         return $stmt->fetchAll();
     }
+
+    public function getNumberOfGuides(): int
+    {
+        $stmt = $this->db->query("SELECT COUNT(*) as total FROM guide;");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result['total'];
+    }
+
+
+
 }

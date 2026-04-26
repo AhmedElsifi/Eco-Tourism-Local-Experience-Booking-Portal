@@ -4,9 +4,10 @@ class TravelerModel
 {
     private $db;
 
-    public function __construct($db)
+    public function __construct()
     {
-        $this->db = $db;
+        global $connect;
+        $this->db = $connect;
     }
 
     public function addNewTraveler($user_id, $user_nationality, $total_carbon_offset)

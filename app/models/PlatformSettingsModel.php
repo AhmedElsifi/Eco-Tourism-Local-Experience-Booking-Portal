@@ -4,9 +4,10 @@ class PlatformSettingsModel
 {
     private $db;
 
-    public function __construct($db)
+    public function __construct()
     {
-        $this->db = $db;
+        global $connect;
+        $this->db = $connect;
     }
 
     public function getPlatformSettings()
