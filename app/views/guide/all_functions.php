@@ -1,293 +1,73 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if (!isset($connect)) {
     require_once dirname(__DIR__, 3) . '/core/connection.php';
 }
 
+require_once 'D:/xam/htdocs/eco_full/app/controllers/GuideController.php';
+
+$controller = new GuideController();
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'guide') {
+    header("Location: /eco_full/app/views/guest/login_page.php");
+    exit;
+}
+
 $guideId = $_SESSION['guide_id'] ?? $_SESSION['user_id'] ?? 0;
 $message = '';
 $error = '';
-$activeTab = $_GET['tab'] ?? 'schedule';
 $fieldErrors = [];
+$activeTab = $_GET['tab'] ?? 'schedule';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'withdraw') {
-    $amount = floatval($_POST['amount'] ?? 0);
-    
-    if ($amount <= 0) {
-        $fieldErrors['amount'] = 'Please enter a valid amount';
-    } elseif ($amount > 10000) {
-        $fieldErrors['amount'] = 'Amount exceeds maximum limit';
-    } elseif ($guideId) {
-        $stmt = $connect->prepare("SELECT * FROM guide_wallet WHERE guide_id = ?");
-        $stmt->execute([$guideId]);
-        $wallet = $stmt->fetch();
-        
-        if ($wallet && $wallet['available_balance'] >= $amount) {
-            $stmt = $connect->prepare("
-                INSERT INTO withdrawal_requests (guide_id, amount, status) VALUES (?, ?, 'pending')
-            ");
-            $stmt->execute([$guideId, $amount]);
-            
-            $stmt = $connect->prepare("
-                UPDATE guide_wallet 
-                SET available_balance = available_balance - ?, pending_balance = pending_balance + ?
-                WHERE guide_id = ?
-            ");
-            $stmt->execute([$amount, $amount, $guideId]);
-            $message = "Withdrawal request submitted for $$amount";
-        } else {
-            $fieldErrors['amount'] = 'Insufficient balance';
-        }
-    }
+$result = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    $result = $controller->processAction();
+    $message = $result['message'] ?? '';
+    $fieldErrors = $result['errors'] ?? [];
+    $error = $result['error'] ?? '';
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'post_report') {
-    $content = trim($_POST['report_content'] ?? '');
-    $tourId = $_POST['tour_id'] ?? null;
-    
-    if (empty($content)) {
-        $fieldErrors['report_content'] = 'Please enter report content';
-    } elseif (strlen($content) < 10) {
-        $fieldErrors['report_content'] = 'Report must be at least 10 characters';
-    } elseif (strlen($content) > 2000) {
-        $fieldErrors['report_content'] = 'Report must be less than 2000 characters';
-    } elseif ($guideId) {
-        $stmt = $connect->prepare("INSERT INTO field_reports (guide_id, tour_id, content_text) VALUES (?, ?, ?)");
-        $stmt->execute([$guideId, $tourId ?: null, $content]);
-        $message = 'Field report posted successfully';
-    }
-}
+$guide = $controller->getGuideData();
+$wallet = $controller->getGuideWallet();
+$bookings = $controller->getGuideBookings();
+$tours = $controller->getGuideTours();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'upload_cert') {
-    $certName = trim($_POST['certificate_name'] ?? '');
-    $issueDate = $_POST['issue_date'] ?? date('Y-m-d');
-    $expiryDate = $_POST['expiry_date'] ?? null;
-    
-    if (empty($certName)) {
-        $fieldErrors['certificate_name'] = 'Please enter certificate name';
-    } elseif (strlen($certName) < 3) {
-        $fieldErrors['certificate_name'] = 'Certificate name too short';
-    } elseif ($guideId) {
-        $stmt = $connect->prepare("
-            INSERT INTO eco_certifications (guide_id, certificate_name, status, issue_date, expiry_date)
-            VALUES (?, ?, 'pending', ?, ?)
-        ");
-        $stmt->execute([$guideId, $certName, $issueDate, $expiryDate]);
-        $message = 'Certification uploaded (pending review)';
-    }
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'upload_lang_cert') {
-    $languageId = $_POST['language_id'] ?? 0;
-    $certName = trim($_POST['certificate_name'] ?? '');
-    
-    if (!$languageId) {
-        $fieldErrors['language_id'] = 'Please select a language';
-    }
-    if (empty($certName)) {
-        $fieldErrors['lang_certificate_name'] = 'Please enter certificate name';
-    } elseif ($guideId) {
-        $stmt = $connect->prepare("
-            INSERT INTO language_certifications (guide_id, language_id, certificate_name, status, issue_date)
-            VALUES (?, ?, ?, 'pending', CURDATE())
-        ");
-        $stmt->execute([$guideId, $languageId, $certName]);
-        $message = 'Language certification uploaded';
-    }
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_impact_tag') {
-    $tourId = $_POST['tour_id'] ?? 0;
-    $tagName = $_POST['tag_name'] ?? '';
-    
-    if (!$tourId) {
-        $fieldErrors['tag_tour_id'] = 'Please select a tour';
-    }
-    if (empty($tagName)) {
-        $fieldErrors['tag_name'] = 'Please select a tag';
-    } elseif ($guideId) {
-        $stmt = $connect->prepare("INSERT INTO tour_impact_tag (tour_id, tag_name) VALUES (?, ?)");
-        $stmt->execute([$tourId, $tagName]);
-        $message = "Impact tag '$tagName' added";
-    }
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'remove_impact_tag') {
-    $tourId = $_POST['tour_id'] ?? 0;
-    $tagName = $_POST['tag_name'] ?? '';
-    
-    if ($tourId && $tagName) {
-        $stmt = $connect->prepare("DELETE FROM tour_impact_tag WHERE tour_id = ? AND tag_name = ?");
-        $stmt->execute([$tourId, $tagName]);
-        $message = "Impact tag '$tagName' removed";
-    }
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_itinerary') {
-    $tourId = $_POST['tour_id'] ?? 0;
-    $languageId = $_POST['language_id'] ?? 1;
-    $content = trim($_POST['content'] ?? '');
-    
-    if (!$tourId) {
-        $fieldErrors['itin_tour_id'] = 'Please select a tour';
-    }
-    if (empty($content)) {
-        $fieldErrors['itin_content'] = 'Please enter itinerary content';
-    } elseif (strlen($content) < 20) {
-        $fieldErrors['itin_content'] = 'Itinerary must be at least 20 characters';
-    } elseif ($tourId) {
-        $stmt = $connect->prepare("
-            INSERT INTO itinerary (tour_id, language_id, version, content)
-            SELECT ?, ?, COALESCE(MAX(version), 0) + 1, ? FROM itinerary WHERE tour_id = ?
-        ");
-        $stmt->execute([$tourId, $languageId, $content, $tourId]);
-        $message = 'Itinerary updated (translation flags triggered)';
-    }
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'claim_badge') {
-    $badge = $_POST['badge'] ?? '';
-    
-    if (empty($badge)) {
-        $fieldErrors['badge'] = 'Please select a badge';
-    } elseif ($guideId) {
-        $stmt = $connect->prepare("INSERT INTO guide_badges (guide_id, badge) VALUES (?, ?)");
-        $stmt->execute([$guideId, $badge]);
-        $message = "Badge '$badge' earned!";
-    }
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'request_shadow') {
-    $tourId = $_POST['tour_id'] ?? 0;
-    $role = $_POST['role'] ?? 'senior';
-    $targetGuideId = $_POST['target_guide_id'] ?? 0;
-    $startTime = $_POST['start_time'] ?? '';
-    $endTime = $_POST['end_time'] ?? '';
-    
-    if (!$tourId) {
-        $fieldErrors['shadow_tour_id'] = 'Please select a tour';
-    }
-    if (empty($startTime)) {
-        $fieldErrors['shadow_start_time'] = 'Please select start date';
-    }
-    if (empty($endTime)) {
-        $fieldErrors['shadow_end_time'] = 'Please select end date';
-    }
-    
-    if ($targetGuideId == 0) {
-        $targetGuideId = $guideId;
-    }
-    
-    $seniorId = $role === 'senior' ? $guideId : $targetGuideId;
-    $traineeId = $role === 'trainee' ? $guideId : $targetGuideId;
-    
-    if ($tourId && $guideId && $seniorId > 0 && $traineeId > 0 && empty($fieldErrors)) {
-        try {
-            $stmt = $connect->prepare("
-                INSERT INTO guide_shadowing (tour_id, senior_guide_id, trainee_guide_id, start_time, end_time, status)
-                VALUES (?, ?, ?, ?, ?, 'scheduled')
-            ");
-            $stmt->execute([$tourId, $seniorId, $traineeId, $startTime, $endTime]);
-            $message = 'Shadowing request submitted';
-        } catch (Exception $e) {
-            $error = 'Error: ' . $e->getMessage();
-        }
-    }
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'verify_identity') {
-    $docNumber = trim($_POST['doc_number'] ?? '');
-    
-    if (empty($docNumber)) {
-        $fieldErrors['doc_number'] = 'Please enter document number';
-    } elseif (strlen($docNumber) < 5) {
-        $fieldErrors['doc_number'] = 'Document number too short';
-    } elseif ($guideId) {
-        $stmt = $connect->prepare("
-            UPDATE guide SET identity_verification_path = ?, verified_at = NOW() WHERE guide_id = ?
-        ");
-        $stmt->execute([$docNumber, $guideId]);
-        $message = 'Identity verification submitted (pending review)';
-    }
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'validate_voucher') {
-    $bookingId = $_POST['booking_id'] ?? 0;
-    
-    if (!$bookingId) {
-        $fieldErrors['voucher_booking_id'] = 'Please enter booking ID';
-    } elseif ($guideId) {
-        $stmt = $connect->prepare("
-            UPDATE booking SET status = 'confirmed' WHERE booking_id = ? AND guide_id = ? AND status = 'pending'
-        ");
-        $stmt->execute([$bookingId, $guideId]);
-        $message = 'Traveler checked in successfully';
-    }
-}
+$withdrawals = [];
+$fieldReports = [];
+$certifications = [];
+$langCerts = [];
+$languages = [];
+$badges = [];
+$shadowings = [];
 
 if ($guideId) {
-    $stmt = $connect->prepare("SELECT * FROM guide_wallet WHERE guide_id = ?");
-    $stmt->execute([$guideId]);
-    $wallet = $stmt->fetch();
-    
     $stmt = $connect->prepare("SELECT * FROM withdrawal_requests WHERE guide_id = ? ORDER BY requested_at DESC LIMIT 10");
     $stmt->execute([$guideId]);
     $withdrawals = $stmt->fetchAll();
-    
     $stmt = $connect->prepare("SELECT fr.*, t.tour_name FROM field_reports fr LEFT JOIN tour t ON fr.tour_id = t.tour_id WHERE fr.guide_id = ? ORDER BY fr.created_at DESC LIMIT 10");
     $stmt->execute([$guideId]);
     $fieldReports = $stmt->fetchAll();
-    
     $stmt = $connect->prepare("SELECT * FROM eco_certifications WHERE guide_id = ? ORDER BY issue_date DESC");
     $stmt->execute([$guideId]);
     $certifications = $stmt->fetchAll();
-    
     $stmt = $connect->prepare("SELECT lc.*, l.language_name FROM language_certifications lc JOIN languages l ON lc.language_id = l.language_id WHERE lc.guide_id = ? ORDER BY lc.issue_date DESC");
     $stmt->execute([$guideId]);
     $langCerts = $stmt->fetchAll();
-    
-    $stmt = $connect->prepare("SELECT t.*, tv.price_per_person FROM tour t LEFT JOIN tour_version tv ON t.tour_id = tv.tour_id WHERE t.guide_id = ? ORDER BY t.created_at DESC");
-    $stmt->execute([$guideId]);
-    $tours = $stmt->fetchAll();
-    
     $stmt = $connect->query("SELECT * FROM languages");
     $languages = $stmt->fetchAll();
-    
     $stmt = $connect->prepare("SELECT * FROM guide_badges WHERE guide_id = ? ORDER BY awarded_at DESC");
     $stmt->execute([$guideId]);
     $badges = $stmt->fetchAll();
-    
-    $stmt = $connect->prepare("
-        SELECT gs.*, t.tour_name, u1.name as senior_name, u2.name as trainee_name
-        FROM guide_shadowing gs
-        JOIN tour t ON gs.tour_id = t.tour_id
-        JOIN users u1 ON gs.senior_guide_id = u1.user_id
-        JOIN users u2 ON gs.trainee_guide_id = u2.user_id
-        WHERE gs.senior_guide_id = ? OR gs.trainee_guide_id = ?
-        ORDER BY gs.start_time DESC
-        LIMIT 10
-    ");
+    $stmt = $connect->prepare("SELECT gs.*, t.tour_name, u1.name as senior_name, u2.name as trainee_name FROM guide_shadowing gs JOIN tour t ON gs.tour_id = t.tour_id JOIN users u1 ON gs.senior_guide_id = u1.user_id JOIN users u2 ON gs.trainee_guide_id = u2.user_id WHERE gs.senior_guide_id = ? OR gs.trainee_guide_id = ? ORDER BY gs.start_time DESC LIMIT 10");
     $stmt->execute([$guideId, $guideId]);
     $shadowings = $stmt->fetchAll();
-    
-    $stmt = $connect->prepare("
-        SELECT b.*, t.tour_name, u.name as traveler_name
-        FROM booking b
-        JOIN tour_version tv ON b.tour_version_id = tv.tour_version_id
-        JOIN tour t ON tv.tour_id = t.tour_id
-        JOIN traveler tr ON b.traveler_id = tr.traveler_id
-        JOIN users u ON tr.traveler_id = u.user_id
-        WHERE b.guide_id = ? AND b.status IN ('pending', 'confirmed')
-        ORDER BY b.start_time
-    ");
-    $stmt->execute([$guideId]);
-    $bookings = $stmt->fetchAll();
-    
-    $stmt = $connect->prepare("SELECT g.*, u.name FROM guide g JOIN users u ON g.guide_id = u.user_id WHERE g.guide_id = ?");
-    $stmt->execute([$guideId]);
-    $guideInfo = $stmt->fetch();
 }
+
+$stmt = $connect->prepare("SELECT g.*, u.name FROM guide g JOIN users u ON g.guide_id = u.user_id WHERE g.guide_id = ?");
+$stmt->execute([$guideId]);
+$guideInfo = $stmt->fetch();
 
 $badgeTypes = ['Expert Guide', 'Conservation Champion', 'First Aid Certified', 'Language Pro', 'Senior Guide', 'Eco-Tourism Pioneer'];
 ?>
@@ -434,7 +214,7 @@ $badgeTypes = ['Expert Guide', 'Conservation Champion', 'First Aid Certified', '
         <div class="mt-auto border-t border-[#727972]/15 pt-4 pb-6">
             <ul class="flex flex-col font-['Manrope'] font-bold tracking-tight uppercase">
                 <li>
-                    <a class="text-[#2d4b37] font-medium px-6 py-3 flex items-center gap-4 hover:bg-[#edeee9]" href="../../index.php?logout=1">
+                    <a class="text-[#2d4b37] font-medium px-6 py-3 flex items-center gap-4 hover:bg-[#edeee9]" href="/eco_full/index.php?logout=1">
                         <span class="material-symbols-outlined">logout</span>
                         Logout
                     </a>

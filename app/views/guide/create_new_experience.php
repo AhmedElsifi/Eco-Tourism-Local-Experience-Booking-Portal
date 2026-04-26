@@ -1,137 +1,32 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if (!isset($connect)) {
     require_once dirname(__DIR__, 3) . '/core/connection.php';
 }
 
+require_once 'D:/xam/htdocs/eco_full/app/controllers/GuideController.php';
+
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'guide') {
+    header("Location: /eco_full/app/views/guest/login_page.php");
+    exit;
+}
+
+$controller = new GuideController();
+$guideId = $_SESSION['guide_id'] ?? $_SESSION['user_id'] ?? 0;
 $message = '';
 $error = '';
 $fieldErrors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create_tour') {
-    $tourName = $_POST['tour_name'] ?? '';
-    $tourType = $_POST['tour_type'] ?? 'eco';
-    $locationId = $_POST['location_id'] ?? 1;
-    $description = $_POST['description'] ?? '';
-    $duration = $_POST['duration'] ?? 4;
-    $pricePerPerson = $_POST['price_per_person'] ?? 0;
-    $maxCapacity = $_POST['max_capacity'] ?? 10;
-    $carbonFootprint = $_POST['carbon_footprint'] ?? null;
-    $wasteManagement = $_POST['waste_management'] ?? '';
-    $localHiring = isset($_POST['local_hiring']) ? 1 : 0;
-    $waypoints = $_POST['waypoints'] ?? [];
-    
-    if (empty($tourName)) {
-        $fieldErrors['tour_name'] = 'Tour name is required';
-    } elseif (strlen($tourName) < 3) {
-        $fieldErrors['tour_name'] = 'Tour name must be at least 3 characters';
-    } elseif (empty($pricePerPerson) || $pricePerPerson <= 0) {
-        $fieldErrors['price_per_person'] = 'Price per person is required';
-    } elseif (empty($maxCapacity) || $maxCapacity < 1) {
-        $fieldErrors['max_capacity'] = 'Max capacity is required';
-    } elseif (!isset($_SESSION['user_id'])) {
-        $error = 'You must be logged in';
-    } else {
-        try {
-            $guideId = $_SESSION['guide_id'] ?? $_SESSION['user_id'];
-            
-            $uploadDir = dirname(__DIR__, 3) . '/public/uploads/tours/';
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0777, true);
-            }
-            
-            $heroImagePath = '';
-            $image1Path = '';
-            $image2Path = '';
-            
-            if (!empty($_FILES['hero_image']['name'])) {
-                $ext = pathinfo($_FILES['hero_image']['name'], PATHINFO_EXTENSION);
-                $heroImagePath = '/public/uploads/tours/' . time() . '_hero.' . $ext;
-                move_uploaded_file($_FILES['hero_image']['tmp_name'], dirname(__DIR__, 3) . $heroImagePath);
-            }
-            if (!empty($_FILES['image_1']['name'])) {
-                $ext = pathinfo($_FILES['image_1']['name'], PATHINFO_EXTENSION);
-                $image1Path = '/public/uploads/tours/' . time() . '_img1.' . $ext;
-                move_uploaded_file($_FILES['image_1']['tmp_name'], dirname(__DIR__, 3) . $image1Path);
-            }
-            if (!empty($_FILES['image_2']['name'])) {
-                $ext = pathinfo($_FILES['image_2']['name'], PATHINFO_EXTENSION);
-                $image2Path = '/public/uploads/tours/' . time() . '_img2.' . $ext;
-                move_uploaded_file($_FILES['image_2']['tmp_name'], dirname(__DIR__, 3) . $image2Path);
-            }
-            
-            $certPath = '';
-            if (!empty($_FILES['certificate_file']['name'])) {
-                $ext = pathinfo($_FILES['certificate_file']['name'], PATHINFO_EXTENSION);
-                $certPath = '/public/uploads/certs/' . time() . '_cert.' . $ext;
-                $certDir = dirname(__DIR__, 3) . '/public/uploads/certs/';
-                if (!is_dir($certDir)) { mkdir($certDir, 0777, true); }
-                move_uploaded_file($_FILES['certificate_file']['tmp_name'], dirname(__DIR__, 3) . $certPath);
-            }
-            
-            $stmt = $connect->prepare("
-                INSERT INTO tour (tour_name, guide_id, location_id, tour_type, status, carbon_footprint, waste_management, local_hiring)
-                VALUES (?, ?, ?, ?, 'draft', ?, ?, ?)
-            ");
-            $stmt->execute([$tourName, $guideId, $locationId, $tourType, $carbonFootprint, $wasteManagement, $localHiring]);
-            $tourId = $connect->lastInsertId();
-            
-            if ($heroImagePath) {
-                $stmt = $connect->prepare("INSERT INTO tour_images (tour_id, image_type, image_path) VALUES (?, 'hero', ?)");
-                $stmt->execute([$tourId, $heroImagePath]);
-            }
-            if ($image1Path) {
-                $stmt = $connect->prepare("INSERT INTO tour_images (tour_id, image_type, image_path) VALUES (?, 'gallery', ?)");
-                $stmt->execute([$tourId, $image1Path]);
-            }
-            if ($image2Path) {
-                $stmt = $connect->prepare("INSERT INTO tour_images (tour_id, image_type, image_path) VALUES (?, 'gallery', ?)");
-                $stmt->execute([$tourId, $image2Path]);
-            }
-            
-            $stmt = $connect->prepare("
-                INSERT INTO tour_version (tour_id, version_name, price_per_person, max_capacity, is_active)
-                VALUES (?, 'v1', ?, ?, 1)
-            ");
-            $stmt->execute([$tourId, $pricePerPerson, $maxCapacity]);
-            
-            if (!empty($waypoints)) {
-                $stmt = $connect->prepare("
-                    INSERT INTO tour_routes (tour_id, route_name, total_distance_km)
-                    VALUES (?, ?, ?)
-                ");
-                $stmt->execute([$tourId, $tourName . ' Route', null]);
-                $routeId = $connect->lastInsertId();
-                
-                $order = 1;
-                foreach ($waypoints as $wp) {
-                    if (!empty($wp['title'])) {
-                        $stmt = $connect->prepare("
-                            INSERT INTO route_stops (route_id, stop_name, stop_order)
-                            VALUES (?, ?, ?)
-                        ");
-                        $stmt->execute([$routeId, $wp['title'], $order++]);
-                    }
-                }
-            }
-            
-            if ($certPath) {
-                $stmt = $connect->prepare("
-                    INSERT INTO eco_certifications (guide_id, certificate_name, file_path, status, issue_date)
-                    VALUES (?, ?, ?, 'pending', CURDATE())
-                ");
-                $stmt->execute([$guideId, $tourName . ' Certification', $certPath]);
-            }
-            
-            $message = "Tour created successfully! Tour ID: $tourId";
-            
-        } catch (Exception $e) {
-            $error = 'Error: ' . $e->getMessage();
-        }
-    }
+    $result = $controller->processAction();
+    $message = $result['message'] ?? '';
+    $error = $result['error'] ?? '';
 }
 
+$locations = [];
 $stmt = $connect->query("SELECT location_id, location_name, country FROM location ORDER BY location_name");
 $locations = $stmt->fetchAll();
 ?>
@@ -346,7 +241,7 @@ $locations = $stmt->fetchAll();
             <ul class="flex flex-col font-['Manrope'] font-bold tracking-tight uppercase">
                 <li>
                     <a class="text-[#2d4b37] dark:text-stone-400 font-medium px-6 py-3 flex items-center gap-4 hover:bg-[#edeee9] dark:hover:bg-stone-800 transition-colors duration-200 active:brightness-90"
-                        href="../../index.php?logout=1">
+                        href="/eco_full/index.php?logout=1">
                         <span class="material-symbols-outlined">logout</span>
                         Logout
                     </a>
